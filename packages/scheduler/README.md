@@ -19,3 +19,4 @@ States: `planned`, `implemented`, `tested`, `render-verified`, `live-verified`.
 | Resource pools and limiters                              | M3-04        | planned |
 | Budget ledger and the paid-call protocol                 | M3-05        | planned |
 | Cancellation, supersession, restart recovery             | M3-06        | planned |
+| Settings catalogue (`src/settings.ts`, records of its stage) | M0-05 | tested |

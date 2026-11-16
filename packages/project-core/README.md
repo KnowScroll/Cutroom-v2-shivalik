@@ -19,3 +19,4 @@ States: `planned`, `implemented`, `tested`, `render-verified`, `live-verified`.
 | Entity schemas, write levels, kind descriptions                 | M2-01          | planned |
 | Patch envelope, authority, invariants, branches, merge          | M2-03 to M2-06 | planned |
 | Views and `project_find`                                        | M4-08a         | planned |
+| Settings catalogue (`src/settings.ts`, records of its stage) | M0-05 | tested |

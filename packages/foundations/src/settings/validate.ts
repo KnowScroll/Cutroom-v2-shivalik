@@ -9,15 +9,17 @@ export const SCALAR_TYPES: readonly ScalarType[] = [
   "boolean",
   "string_list",
   "integer_or_string",
+  "number_list",
 ];
 
 const RANGE_KINDS_FOR_TYPE: Record<ScalarType, readonly string[]> = {
   number: ["number_range"],
   integer: ["number_range"],
-  string: ["values"],
+  string: ["values", "text"],
   boolean: ["boolean"],
   string_list: ["list"],
   integer_or_string: ["any_of"],
+  number_list: ["number_list"],
 };
 
 export function isScalarType(t: unknown): t is ScalarType {
@@ -35,6 +37,10 @@ export function describeRange(range: ScalarRange): string {
       return `${range.min} to ${range.max}`;
     case "values":
       return `one of ${range.values.join(", ")}`;
+    case "text":
+      return `text of at most ${range.max_length} characters${range.pattern === undefined ? "" : ` matching ${range.pattern}`}`;
+    case "number_list":
+      return `${range.min_length} to ${range.max_length} ${range.integer === true ? "whole numbers" : "numbers"} in ${range.min} to ${range.max}${range.ascending === true ? ", ascending" : ""}`;
     case "boolean":
       return "true or false";
     case "list":
@@ -45,7 +51,28 @@ export function describeRange(range: ScalarRange): string {
 }
 
 function acceptsScalar(type: ScalarType, range: ScalarRange, value: unknown): boolean {
+  if (value === null) return "optional" in range && range.optional === true;
   switch (range.kind) {
+    case "text":
+      return (
+        typeof value === "string" &&
+        value.length <= range.max_length &&
+        (range.pattern === undefined || new RegExp(`^(?:${range.pattern})$`, "u").test(value))
+      );
+    case "number_list": {
+      if (!Array.isArray(value)) return false;
+      if (value.length < range.min_length || value.length > range.max_length) return false;
+      const inRange = value.every(
+        (n) =>
+          typeof n === "number" &&
+          Number.isFinite(n) &&
+          (range.integer !== true || Number.isInteger(n)) &&
+          n >= range.min &&
+          n <= range.max,
+      );
+      if (!inRange) return false;
+      return range.ascending !== true || value.every((n, i) => i === 0 || n > value[i - 1]);
+    }
     case "number_range":
       return (
         typeof value === "number" &&
@@ -61,6 +88,7 @@ function acceptsScalar(type: ScalarType, range: ScalarRange, value: unknown): bo
     case "list": {
       if (!Array.isArray(value)) return false;
       const members = range.members;
+      if (range.min_length !== undefined && value.length < range.min_length) return false;
       return value.every((m) => typeof m === "string" && (members === undefined || members.includes(m)));
     }
     case "any_of":
@@ -166,6 +194,34 @@ export function rangeProblem(type: SettingType, range: unknown): string | undefi
       return Array.isArray(range.values) && range.values.length > 0
         ? undefined
         : "values range needs a non-empty list";
+    case "text":
+      if (!Number.isInteger(range.max_length) || (range.max_length as number) < 1)
+        return "text needs an integer max_length of at least 1";
+      if (range.pattern !== undefined) {
+        try {
+          new RegExp(`^(?:${String(range.pattern)})$`, "u");
+        } catch {
+          return "text pattern is not a regular expression";
+        }
+      }
+      return undefined;
+    case "number_list":
+      if (
+        typeof range.min !== "number" ||
+        typeof range.max !== "number" ||
+        !Number.isFinite(range.min) ||
+        !Number.isFinite(range.max) ||
+        range.min > range.max
+      )
+        return "number_list needs finite min <= max";
+      if (
+        !Number.isInteger(range.min_length) ||
+        !Number.isInteger(range.max_length) ||
+        (range.min_length as number) < 0 ||
+        (range.min_length as number) > (range.max_length as number)
+      )
+        return "number_list needs integer lengths with 0 <= min_length <= max_length";
+      return undefined;
     case "list":
       return range.members === undefined || (Array.isArray(range.members) && range.members.length > 0)
         ? undefined

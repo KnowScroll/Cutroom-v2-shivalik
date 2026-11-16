@@ -19,3 +19,4 @@ States: `planned`, `implemented`, `tested`, `render-verified`, `live-verified`.
 | Takes and voice tools                                  | M5-04        | planned |
 | Code-rendered music, procedural effects, mix graph     | M5-05, M5-06 | planned |
 | Captions: segmenter, `captions_build`                  | M5-07        | planned |
+| Settings catalogue (`src/settings.ts`, records of its stage) | M0-05 | tested |

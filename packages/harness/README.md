@@ -19,3 +19,4 @@ States: `planned`, `implemented`, `tested`, `render-verified`, `live-verified`.
 | Tool boundary: validation and repair                | M4-05        | planned |
 | Session runtime and Director loop                   | M4-06, M4-07 | planned |
 | Sub-loops and workers (treatment, component author) | M4-10, M4-11 | planned |
+| Settings catalogue (`src/settings.ts`, records of its stage) | M0-05 | tested |

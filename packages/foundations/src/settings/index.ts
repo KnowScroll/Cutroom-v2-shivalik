@@ -6,6 +6,7 @@ export { SettingsRegistry, settingPath } from "./registry.js";
 export type {
   KeyedRange,
   KeySpec,
+  NumberListRange,
   OverrideLevel,
   ScalarRange,
   ScalarType,
@@ -15,5 +16,6 @@ export type {
   SettingsLayer,
   SettingType,
   SettingValue,
+  TextRange,
   WriterLevel,
 } from "./types.js";

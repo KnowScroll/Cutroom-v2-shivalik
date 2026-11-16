@@ -4,5 +4,6 @@ export * from "./hash/index.js";
 export * from "./ids/index.js";
 export * from "./readiness/index.js";
 export * from "./settings/index.js";
+export { FOUNDATIONS_SETTINGS } from "./settings.js";
 export * from "./time/index.js";
 export * from "./vocab/index.js";

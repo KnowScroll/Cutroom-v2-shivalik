@@ -18,3 +18,4 @@ States: `planned`, `implemented`, `tested`, `render-verified`, `live-verified`.
 | Probe checks, film detectors, lineage checks        | M6-01 to M6-03 | planned |
 | R-01, F-06, evidence forms and the pinned bundle    | M6-04a, M6-05  | planned |
 | Review policy, completion state, deliverable record | M6-07, M6-08   | planned |
+| Settings catalogue (`src/settings.ts`, records of its stage) | M0-05 | tested |
