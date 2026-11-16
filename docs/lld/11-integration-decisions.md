@@ -835,3 +835,11 @@ The final consistency pass ([report](../impl/research/final-consistency-pass.md)
 | L53 | "M0-01" in U27, U30, U31, U34 and R10 §4.1 | Where the text is about the guard hook or the templates it means M0-01a; elsewhere it means M0-01b. | R10, this record |
 | L54 | Two broken links in history files | Left as they are. History files are not edited. | — |
 | L55 | "Not yet stated" wording in 18.3 and 18.4 | Where 18.5 or 18.6 decides the point, the later section wins, as for the whole record. | — |
+
+### 18.7 Build revisions
+
+Design gaps and errors found during the build, decided by the orchestrator under `impl/00` section 6 and recorded here before the code that depends on them. Numbered `B1`, `B2`, …; not to be confused with report B's rows (`B:…`).
+
+| # | Found | Decision | Documents changed |
+|---|---|---|---|
+| B1 | M0-02 (#3): R1 §1.4 says that "at 48 kHz and the supported frame rates the division is exact". At 48 kHz (14,700 flicks per sample) a frame period is a whole number of samples only at 24, 25, 30, 48, 50, 60, 100 and 120 fps and 24000/1001; at 90 fps (7,840,000 flicks), 144 fps (4,900,000), 30000/1001, 60000/1001 and 120000/1001 it is not, so `N·T / 14,700` is not a whole number for every `N`. | The rule stands: the sample count is `round(N·T / flicks_per_sample)` from the absolute end time, half up (L6). Only the claim of exactness is corrected. Tests assert exactness only where the frame period is a multiple of the sample period and the half-up result elsewhere. | R1 §1.4 |
