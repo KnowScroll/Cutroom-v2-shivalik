@@ -25,12 +25,13 @@ CREATE TABLE revision (
   id         TEXT PRIMARY KEY CHECK (id GLOB 'rev_*'),
   tree_hash  TEXT NOT NULL,
   parents    TEXT NOT NULL,
-  manifest   TEXT NOT NULL,
+  manifest   TEXT,
   origin     TEXT NOT NULL CHECK (origin IN ('patch', 'merge', 'restore', 'migration', 'genesis')),
   patch_id   TEXT,
   revalidate TEXT,
   pruned     INTEGER NOT NULL DEFAULT 0 CHECK (pruned IN (0, 1)),
-  created_at TEXT NOT NULL
+  created_at TEXT NOT NULL,
+  CHECK (manifest IS NOT NULL OR pruned = 1)
 ) STRICT;
 
 CREATE TABLE branch (
@@ -62,6 +63,7 @@ CREATE TABLE version_blob (
   PRIMARY KEY (version_hash, blob_hash)
 ) STRICT;
 CREATE INDEX version_blob_blob ON version_blob(blob_hash);
+CREATE UNIQUE INDEX accepted_log_revision ON accepted_log(revision);
 `;
 
 /** Script number 2 of the shared sequence (M0-07's `blob` table is number 1). */

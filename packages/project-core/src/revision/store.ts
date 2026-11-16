@@ -15,7 +15,8 @@ export interface RevisionRecord {
   readonly tree_hash: string;
   readonly parents: readonly string[];
   /** The stored text: exactly the text that was hashed into `id`. */
-  readonly manifest: string;
+  /** Null once the revision is pruned (R3 §2.14: the row stays, the manifest is dropped). */
+  readonly manifest: string | null;
   readonly origin: RevisionOrigin;
   readonly patch_id: string | null;
   readonly pruned: boolean;
@@ -102,9 +103,11 @@ export class RevisionStore {
     const h = hashEntityVersion(doc);
     await this.storage.tx((db) => {
       db.prepare(
-        "INSERT OR IGNORE INTO entity_version(hash, pin_hash, entity_id, kind, v, handle, doc) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO entity_version(hash, pin_hash, entity_id, kind, v, handle, doc) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(hash) DO NOTHING",
       ).run(h.hash, h.pin_hash, id, kind, v, handle ?? null, h.text);
-      const link = db.prepare("INSERT OR IGNORE INTO version_blob(version_hash, blob_hash) VALUES (?, ?)");
+      const link = db.prepare(
+        "INSERT INTO version_blob(version_hash, blob_hash) VALUES (?, ?) ON CONFLICT(version_hash, blob_hash) DO NOTHING",
+      );
       for (const b of blobs) link.run(h.hash, b);
     });
     return { hash: h.hash, pin_hash: h.pin_hash };
@@ -123,10 +126,20 @@ export class RevisionStore {
     readonly revalidate?: readonly string[];
   }): Promise<{ readonly revision_id: string; readonly tree_hash: string }> {
     const m = hashManifest(input);
+    if (new Set(input.parents).size !== input.parents.length) throw new TypeError("duplicate parents");
     const at = this.now().toISOString();
     await this.storage.tx((db) => {
+      // A listed hash that is not stored is a caller bug (R3 stage 6 integrity is M2); the first one is named.
+      const missing = db
+        .prepare(
+          `SELECT j.value AS hash FROM json_each(?, '$.entities') j
+             LEFT JOIN entity_version ev ON ev.hash = j.value
+            WHERE ev.hash IS NULL ORDER BY j.key LIMIT 1`,
+        )
+        .get(m.manifest);
+      if (missing !== undefined) throw new TypeError(`entity version not stored: ${str(missing.hash)}`);
       db.prepare(
-        "INSERT OR IGNORE INTO revision(id, tree_hash, parents, manifest, origin, patch_id, revalidate, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO revision(id, tree_hash, parents, manifest, origin, patch_id, revalidate, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO NOTHING",
       ).run(
         m.revision_id,
         m.tree_hash,
@@ -148,7 +161,7 @@ export class RevisionStore {
       id: str(r.id),
       tree_hash: str(r.tree_hash),
       parents: JSON.parse(str(r.parents)) as string[],
-      manifest: str(r.manifest),
+      manifest: strOrNull(r.manifest),
       origin: str(r.origin) as RevisionOrigin,
       patch_id: strOrNull(r.patch_id),
       pruned: Number(r.pruned) === 1,
@@ -163,6 +176,7 @@ export class RevisionStore {
   snapshot(revisionId: string): Result<readonly SnapshotEntity[]> {
     const rev = this.storage.prepare("SELECT manifest FROM revision WHERE id = ?").get(revisionId);
     if (rev === undefined) return fail(unknownRevision(revisionId, "revision_id"));
+    if (rev.manifest === null) throw new Error(`revision ${revisionId} is pruned: its manifest is dropped`);
     const rows = this.storage
       .prepare(
         `SELECT j.key AS entity_id, j.value AS hash, ev.doc AS doc
@@ -198,6 +212,9 @@ export class RevisionStore {
     if (!isRevisionId(input.head)) throw new TypeError(`head is not a revision ID: ${input.head}`);
     try {
       await this.storage.tx((db) => {
+        if (db.prepare("SELECT 1 AS x FROM branch WHERE name = ?").get(input.name) !== undefined) {
+          throw new Refusal({ code: "BRANCH_EXISTS", path: "name", got: input.name });
+        }
         if (db.prepare("SELECT 1 AS x FROM revision WHERE id = ?").get(input.head) === undefined) {
           throw new Refusal(unknownRevision(input.head, "head"));
         }
@@ -258,6 +275,17 @@ export class RevisionStore {
           if (db.prepare("SELECT 1 AS x FROM revision WHERE id = ?").get(input.candidate) === undefined) {
             throw new Refusal(unknownRevision(input.candidate, "candidate"));
           }
+          if (input.candidate === input.expected_base) {
+            throw new TypeError("candidate is the expected base: a swap must move the head");
+          }
+          if (
+            db.prepare("SELECT 1 AS x FROM accepted_log WHERE revision = ?").get(input.candidate) !==
+            undefined
+          ) {
+            throw new TypeError(
+              `revision already accepted: ${input.candidate} (a rollback is a new revision, R3 §2.5)`,
+            );
+          }
           const upd = db
             .prepare("UPDATE branch SET head = ? WHERE name = ? AND head = ?")
             .run(input.candidate, ACCEPTED_BRANCH, input.expected_base);
@@ -276,11 +304,17 @@ export class RevisionStore {
             .run(input.candidate, input.expected_base, input.from_branch, input.decision, input.by, at);
           const seq = Number(ins.lastInsertRowid);
           if (alsoInTransaction !== undefined) {
-            const returned: unknown = alsoInTransaction(db, {
-              seq,
-              revision: input.candidate,
-              previous: input.expected_base,
-            });
+            const sealed = sealDb(db);
+            let returned: unknown;
+            try {
+              returned = alsoInTransaction(sealed.db, {
+                seq,
+                revision: input.candidate,
+                previous: input.expected_base,
+              });
+            } finally {
+              sealed.seal();
+            }
             if (returned !== undefined && typeof (returned as { then?: unknown }).then === "function") {
               throw new TypeError("alsoInTransaction must be synchronous");
             }
@@ -307,6 +341,52 @@ export class RevisionStore {
           .map((r) => str(r.blob_hash)),
     };
   }
+}
+
+/** A view of the transaction's connection that refuses every call once the member function has returned. */
+function sealDb(db: RawDb): { readonly db: RawDb; readonly seal: () => void } {
+  let open = true;
+  const check = (): void => {
+    if (!open) throw new Error("the transaction has ended: a hook must write synchronously");
+  };
+  const view: RawDb = {
+    exec: (sql) => {
+      check();
+      db.exec(sql);
+    },
+    prepare: (sql) => {
+      check();
+      const st = db.prepare(sql);
+      return {
+        run: (...p) => {
+          check();
+          return st.run(...p);
+        },
+        get: (...p) => {
+          check();
+          return st.get(...p);
+        },
+        all: (...p) => {
+          check();
+          return st.all(...p);
+        },
+      };
+    },
+    get isTransaction() {
+      return db.isTransaction;
+    },
+    sqliteVersion: () => db.sqliteVersion(),
+    backupTo: (d) => db.backupTo(d),
+    close: () => {
+      throw new Error("a hook may not close the connection");
+    },
+  };
+  return {
+    db: view,
+    seal: () => {
+      open = false;
+    },
+  };
 }
 
 function unknownRevision(id: string, path: string): Diagnostic {

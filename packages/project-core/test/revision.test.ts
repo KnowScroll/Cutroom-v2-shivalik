@@ -5,6 +5,7 @@ import {
   type EntityDocument,
   MigrationRegistry,
   openDatabase,
+  type RawDb,
   REVISION_CODES,
   REVISION_MIGRATIONS,
   type RevisionStore,
@@ -60,7 +61,10 @@ async function genesis(s: RevisionStore): Promise<string> {
 }
 
 test("revision: codes are listed and each is asserted below", () => {
-  assert.deepEqual([...REVISION_CODES], ["STALE_BASE", "UNKNOWN_REVISION", "UNKNOWN_BRANCH"]);
+  assert.deepEqual(
+    [...REVISION_CODES],
+    ["STALE_BASE", "UNKNOWN_REVISION", "UNKNOWN_BRANCH", "BRANCH_EXISTS"],
+  );
 });
 
 test("revision: same content gives the same ID; time is not hashed", async () => {
@@ -152,7 +156,7 @@ test("revision: the stored manifest re-hashes to its ID", async () => {
     });
     const rec = s.getRevision(r.revision_id);
     assert.ok(rec.ok);
-    if (!rec.ok) return;
+    if (!rec.ok || rec.value.manifest === null) throw new Error("no manifest");
     assert.equal(`rev_${sha256Hex(rec.value.manifest)}`, r.revision_id);
     assert.equal(rec.value.manifest, canonicalJson(JSON.parse(rec.value.manifest)));
     const u = s.getRevision(`rev_${"0".repeat(64)}`);
@@ -171,7 +175,8 @@ test("revision: branches, and UNKNOWN_BRANCH / UNKNOWN_REVISION", async () => {
     assert.ok(!missing.ok && missing.diagnostics[0]?.code === "UNKNOWN_BRANCH");
     const bad = await s.createBranch({ name: "x", head: `rev_${"0".repeat(64)}`, type: "worker" });
     assert.ok(!bad.ok && bad.diagnostics[0]?.code === "UNKNOWN_REVISION");
-    await assert.rejects(s.createBranch({ name: "main", head: g, type: "accepted" }));
+    const dup = await s.createBranch({ name: "main", head: g, type: "accepted" });
+    assert.ok(!dup.ok && dup.diagnostics[0]?.code === "BRANCH_EXISTS");
     const snap = s.snapshot(`rev_${"0".repeat(64)}`);
     assert.ok(!snap.ok && snap.diagnostics[0]?.code === "UNKNOWN_REVISION");
   });
@@ -309,9 +314,23 @@ test("swap: head, log row and hook rows commit together; a throwing hook rolls a
     assert.equal(Number(storage.prepare("SELECT count(*) AS n FROM accepted_log").get()?.n), 1);
     const head = s.getBranch("main");
     assert.ok(head.ok && head.value.head === ids[1]);
-    // an async hook is refused and rolls back too
-    await assert.rejects(s.swapAcceptedHead(input(1), (() => Promise.resolve()) as never), TypeError);
+    // an async hook is refused and rolls back; whatever it writes after its first await is refused too
+    let late: unknown;
+    const asyncHook = async (db: RawDb) => {
+      await Promise.resolve();
+      try {
+        db.prepare("INSERT INTO hook_rows VALUES (77, 'late')").run();
+      } catch (e) {
+        late = e;
+      }
+    };
+    await assert.rejects(s.swapAcceptedHead(input(1), asyncHook as never), TypeError);
+    await new Promise((r) => setTimeout(r, 60));
+    assert.ok(late instanceof Error, "the late write was refused");
+    assert.equal(Number(storage.prepare("SELECT count(*) AS n FROM hook_rows").get()?.n), 1);
     assert.equal(Number(storage.prepare("SELECT count(*) AS n FROM accepted_log").get()?.n), 1);
+    const h2 = s.getBranch("main");
+    assert.ok(h2.ok && h2.value.head === ids[1]);
     const retry = await s.swapAcceptedHead(input(1));
     assert.ok(retry.ok && retry.value.seq === 2);
   });
@@ -342,7 +361,7 @@ test("swap: one transaction at FULL durability", async () => {
   );
 });
 
-test("snapshot: 800 entities return 800 documents (time reported only)", async () => {
+test("snapshot: 800 entities return 800 documents (time reported only)", async (t) => {
   await withStore(async (s, storage) => {
     const entities: Record<string, string> = {};
     const want = new Map<string, string>();
@@ -358,7 +377,9 @@ test("snapshot: 800 entities return 800 documents (time reported only)", async (
     const t0 = performance.now();
     const snap = s.snapshot(r.revision_id);
     const ms = performance.now() - t0;
-    console.log(`snapshot of 800 entities: ${ms.toFixed(2)} ms (reported only)`);
+    const line = `snapshot of 800 entities: ${ms.toFixed(2)} ms (reported only)`;
+    console.log(line);
+    t.diagnostic(line);
     assert.ok(snap.ok);
     if (!snap.ok) return;
     assert.equal(snap.value.length, 800);
@@ -369,15 +390,88 @@ test("snapshot: 800 entities return 800 documents (time reported only)", async (
   });
 });
 
-test("snapshot: a manifest entry with no stored document throws", async () => {
-  await withStore(async (s) => {
-    const r = await s.putRevision({
-      project,
-      parents: [],
-      entities: { [project]: `sha256:${"a".repeat(64)}` },
-      origin: "genesis",
+test("revision: a manifest listing an unstored entity version is refused and stores nothing", async () => {
+  await withStore(async (s, storage) => {
+    const missing = `sha256:${"a".repeat(64)}`;
+    await assert.rejects(
+      s.putRevision({ project, parents: [], entities: { [project]: missing }, origin: "genesis" }),
+      (e: Error) => e instanceof TypeError && e.message.includes(missing),
+    );
+    assert.equal(Number(storage.prepare("SELECT count(*) AS n FROM revision").get()?.n), 0);
+  });
+});
+
+test("revision: CHECK failures raise and store nothing; a duplicate stays idempotent", async () => {
+  await withStore(async (s, storage) => {
+    const e = await s.putEntityVersion(doc(project));
+    const base = { project, parents: [], entities: { [project]: e.hash } };
+    await assert.rejects(s.putRevision({ ...base, origin: "bogus" as never }), /CHECK/);
+    assert.equal(Number(storage.prepare("SELECT count(*) AS n FROM revision").get()?.n), 0);
+    const a = await s.putRevision({ ...base, origin: "genesis" });
+    const b = await s.putRevision({ ...base, origin: "genesis" });
+    assert.deepEqual(a, b);
+    assert.equal(Number(storage.prepare("SELECT count(*) AS n FROM revision").get()?.n), 1);
+    // entity_version: a hash that breaks the CHECK raises instead of being ignored
+    assert.throws(
+      () =>
+        storage
+          .prepare(
+            "INSERT INTO entity_version VALUES ('bad', 'bad', 'e', 'k', 1, NULL, '{}') ON CONFLICT(hash) DO NOTHING",
+          )
+          .run(),
+      /CHECK/,
+    );
+    const again = await s.putEntityVersion(doc(project));
+    assert.deepEqual(again, e);
+  });
+});
+
+test("revision: duplicate parents are refused; a pruned revision has no manifest and cannot be snapshotted", async () => {
+  await withStore(async (s, storage) => {
+    const g = await genesis(s);
+    const e = await s.putEntityVersion(doc(project));
+    await assert.rejects(
+      s.putRevision({ project, parents: [g, g], entities: { [project]: e.hash }, origin: "merge" }),
+      TypeError,
+    );
+    // manifest may be NULL only on a pruned row
+    assert.throws(() => storage.prepare("UPDATE revision SET manifest = NULL").run(), /CHECK/);
+    storage.prepare("UPDATE revision SET manifest = NULL, pruned = 1").run();
+    const rec = s.getRevision(g);
+    assert.ok(rec.ok && rec.value.manifest === null && rec.value.pruned);
+    assert.throws(() => s.snapshot(g), /pruned/);
+  });
+});
+
+test("swap: a revision already accepted, or the head itself, is refused and changes nothing", async () => {
+  await withStore(async (s, storage) => {
+    const ids = await setup(s, 2);
+    const mk = (base: string, candidate: string) => ({
+      expected_base: base,
+      candidate,
+      from_branch: "d/1",
+      decision: null,
+      by: "x",
     });
-    assert.throws(() => s.snapshot(r.revision_id), /not stored/);
+    assert.ok((await s.swapAcceptedHead(mk(ids[0] as string, ids[1] as string))).ok);
+    assert.ok((await s.swapAcceptedHead(mk(ids[1] as string, ids[2] as string))).ok);
+    // the head to itself
+    await assert.rejects(s.swapAcceptedHead(mk(ids[2] as string, ids[2] as string)), TypeError);
+    // back to an earlier accepted revision
+    await assert.rejects(s.swapAcceptedHead(mk(ids[2] as string, ids[1] as string)), /already accepted/);
+    // the unique index backs it up
+    assert.throws(
+      () =>
+        storage
+          .prepare(
+            "INSERT INTO accepted_log(revision, previous, from_branch, by, at) VALUES (?, ?, 'd/1', 'x', 't')",
+          )
+          .run(ids[1] as string, ids[2] as string),
+      /UNIQUE/,
+    );
+    const head = s.getBranch("main");
+    assert.ok(head.ok && head.value.head === ids[2]);
+    assert.equal(Number(storage.prepare("SELECT count(*) AS n FROM accepted_log").get()?.n), 2);
   });
 });
 

@@ -1,4 +1,4 @@
-// Design: lld/04 §2.6 "Atomic accepted-head update" (STALE_BASE), §2.4 stage 2 (UNKNOWN_REVISION, UNKNOWN_BRANCH)
+// Design: lld/04 §2.6 "Atomic accepted-head update" (STALE_BASE), §2.4 stage 2 (UNKNOWN_REVISION, UNKNOWN_BRANCH), "Other" + lld/11 F18 (BRANCH_EXISTS)
 // Every code listed here must be asserted by a test, or `npm run check` fails.
-export const REVISION_CODES = ["STALE_BASE", "UNKNOWN_REVISION", "UNKNOWN_BRANCH"] as const;
+export const REVISION_CODES = ["STALE_BASE", "UNKNOWN_REVISION", "UNKNOWN_BRANCH", "BRANCH_EXISTS"] as const;
 export type RevisionCode = (typeof REVISION_CODES)[number];
