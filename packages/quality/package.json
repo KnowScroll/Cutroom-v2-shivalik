@@ -1,0 +1,25 @@
+{
+  "name": "@cutroom/quality",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The check runner, the check catalogue, the Reviewer protocol, Quality Intent rules, completion state and the deliverable record",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "scripts": {
+    "test": "node ../../tools/run-tests.mjs unit --package quality"
+  },
+  "dependencies": {
+    "@cutroom/foundations": "0.0.0",
+    "@cutroom/project-core": "0.0.0",
+    "@cutroom/compiler": "0.0.0",
+    "@cutroom/scheduler": "0.0.0",
+    "@cutroom/render": "0.0.0",
+    "@cutroom/harness": "0.0.0",
+    "@cutroom/studio": "0.0.0"
+  }
+}

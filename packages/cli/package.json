@@ -1,0 +1,26 @@
+{
+  "name": "@cutroom/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The command-line entry point: `cutroom new | run | status | stop`, the Space socket and the `ControlApi`",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "scripts": {
+    "test": "node ../../tools/run-tests.mjs unit --package cli"
+  },
+  "dependencies": {
+    "@cutroom/foundations": "0.0.0",
+    "@cutroom/project-core": "0.0.0",
+    "@cutroom/compiler": "0.0.0",
+    "@cutroom/scheduler": "0.0.0",
+    "@cutroom/render": "0.0.0",
+    "@cutroom/harness": "0.0.0",
+    "@cutroom/studio": "0.0.0",
+    "@cutroom/quality": "0.0.0"
+  }
+}

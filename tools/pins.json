@@ -1,0 +1,371 @@
+{
+  "schema": 1,
+  "os": {
+    "distro": "ubuntu",
+    "version_id": "22.04",
+    "kernel": "6.18.58.1-microsoft-standard-WSL2",
+    "glibc": "2.35",
+    "fontconfig": "2.13.1",
+    "raster_mode": "gpu_compositing=disabled_software;rasterization=disabled_software",
+    "libraries": {
+      "libdl.so.2": "3eaaa4aefd9c28f3867c96a427c3cbec9191cb61c4c9d0a2cb4a765d66064499",
+      "libpthread.so.0": "fbed9505adacada2abb37c6b43be2df6de81e742712c6025694ba48de62c7e78",
+      "libglib-2.0.so.0": "86acf2c843bcfaf5e8c24ab959737960c797da53b41658dc8ec6f257c786048c",
+      "libgobject-2.0.so.0": "05a94d6be0a50dba15a579f3ad1f5c6ec12c8d303f3b715a665fd27824ca523e",
+      "libnspr4.so": "c38693b813e89bdd4330b87f719d73f0b89653ddd484aa3280c42247388549d8",
+      "libnss3.so": "9a98137d2ddd8bb504cdfa98c5ff70cce3e252418acb0edab9db649f110027da",
+      "libnssutil3.so": "de887f45cfa298ab0ec7108701c5d8c79349714a19aee9b6a6f8a327aec4abc1",
+      "libgio-2.0.so.0": "b63a477916c1f95de4b2c80bb4f5940a59ebc5860793d93b271448e90edbfe52",
+      "libatk-1.0.so.0": "65831ad344b15dae860a3c73dbe97512b05e54d3566948f5bc633f67216ffd97",
+      "libatk-bridge-2.0.so.0": "13670b19f87dbf32b697104cb5019c91ad886d8122e8d645c27162c97e41e877",
+      "libdbus-1.so.3": "a3d53f7215af9860f3466b94cd8fe3e95c253c46df164dea62af9b9def93dcea",
+      "libm.so.6": "3dd5511ae94785c9f921429b0f2b2f7aabb461b6f0e6de6dfdbef15f24bdfee6",
+      "libX11.so.6": "e23ed094eaf0a74a822a6d9d14eee628ab9f7ec08aecbf20ffd803f019ff6e98",
+      "libXcomposite.so.1": "4eea309674b05930c58bb4c8d2588c049ebae4fc0ce27fd06abe3a5fed9e6f91",
+      "libXdamage.so.1": "2e059ebfa3ed4d37e85c7924529d4c2cf7f3890786acd806b308c2b56571bc20",
+      "libXext.so.6": "d61399986f565c00c090a1f222019db7b40f42eaf2d93834136d6234c16ec465",
+      "libXfixes.so.3": "3e03576f262820fe27a8cfbcf4d8a2f3bbb5f1df55290e91643794a8147dffb7",
+      "libXrandr.so.2": "237b8560e61e4c2d244ea21b4d2e0cd9614de26ce284f7258646897940d8e796",
+      "libgbm.so.1": "c0e634db4bc3c8dc6a4a6c83ce52fec78848fd7e2af7b428203048b88933f453",
+      "libexpat.so.1": "683e2e41db14581194bf1f6616e95a8f02cd4ab599f0fba807e46325ec01d21f",
+      "libxcb.so.1": "aabc489094abd96c876d1c989a2da8a8aa6d28f5a676c4a84dd6d0a0c34aec5d",
+      "libxkbcommon.so.0": "26773f54626af26f5f26f0279a9748ea2445c1adcfef50a7d572c9b54575bd86",
+      "libudev.so.1": "08b989e58a49b85468db9be8f5f915d756ae70865a291bb524bc87d9fedf6dda",
+      "libasound.so.2": "9b2bd6ae0b44763493961fc287ec6f50808bc79bc6974c2a892401514e190584",
+      "libatspi.so.0": "e1df48522f75baa048beb637c749708536bb6459d7dc8e9df12736f003fb2a88",
+      "libgcc_s.so.1": "fc9d43b2f6c20e53b009238f767c5b949d202389e20de9e202ea684b4ba3729a",
+      "libc.so.6": "b2cf6c33b74d2f22543b7a469a75b538911e690f769d0b238843a49465b83793",
+      "ld-linux-x86-64.so.2": "41daf7836f7fce21a40ca63a00c5caf21b05a35a76ccc075d86f1716212cdf01",
+      "libpcre.so.3": "baae995e98223eee1afe6c640f21bdbba91b9c170584ce766418b59810d98a93",
+      "libffi.so.8": "247da4d5d34a91cadcdd6282be4c4644fcb8af001334d2b8a82ecda435418cbf",
+      "libplc4.so": "279e6c45488241b44006e604f1cea85d172111069935a0da0a74d8c687fd106d",
+      "libplds4.so": "9ede43d7ae46771bae1000008100fd4f382b554085c7530e0330eeda5a58d172",
+      "libgmodule-2.0.so.0": "1019fc28ced6829f22b446a091ecb5b76b9fa3b3c458bc6ea936c1d328302cb5",
+      "libz.so.1": "64c206f0146cc58bbddc4f22054436f4ff278f5a554aa3ce6921ddf7e9133370",
+      "libmount.so.1": "b6e4a8ddc851b58e7f8c93945f875439d2a14a8809efde17b028c4e2db6af328",
+      "libselinux.so.1": "624eb1e6a7510e0983e9caa1bbf3e1966acb64fd6d3ad4db94528addbe1e7224",
+      "libsystemd.so.0": "40c7e0a11f089d712f0462df20e75e968c734a5813c4546f149c11a2f837d88c",
+      "libXrender.so.1": "2415c0b512d332522625bc65bcc5e05dba93c2e3418329ded2855111fb0cf723",
+      "libdrm.so.2": "bab1e283c0fdd19eae10db2522fdc5806f0efee3c175e5e8bb1bc1b478c7e2b1",
+      "libwayland-server.so.0": "ce73bdce7d0953f4f045a232f5351ba386be24d3a4aa5f00149f346e4d639003",
+      "libxcb-randr.so.0": "942a242b33c80ab4a5ce6d3db62d12f8856589860fa1986248b046850e58a80e",
+      "libXau.so.6": "98343a8324ea62ed75a13c923ed5dea96b7a8ad41aeba9f18126c4cbf7178064",
+      "libXdmcp.so.6": "1dc3ff1269a5ede69ef9a8ec2436d73fccbcd10531055b359292e0bde4e29b46",
+      "libXi.so.6": "dc46e4ed45e94b521486438d902b2c360e50bd162849448b53adc7143fa1cb84",
+      "libblkid.so.1": "0aa92efdef9d9419f49b784c9377e3fa09c6e4247162ff8b581934b891fcfa0f",
+      "libpcre2-8.so.0": "28626d3b1bfcc7305496b30e621068f67d8707d88d0193cc536983c748c8cbbc",
+      "liblzma.so.5": "3147e2cb512d17a4064d34f61e69591b6473543db2ec63cd797f766cd3b09037",
+      "libzstd.so.1": "5df4f4df42d76270bb6981fabc7c1fdccd8ad28a23d84d67f73203fb3f537667",
+      "liblz4.so.1": "65f47a3dc2cec5f938379b7b625f0621657bf1254551895d22462c6a204cbad8",
+      "libcap.so.2": "00e8d9ef4e9c081a3c8d8164cfd06165937c9bcb6d4f9b47c6dcfa53d9e52046",
+      "libgcrypt.so.20": "82f7902f4cffbb89540c09cdb3045d8026548ae4c811d003f25e7b74a6de9d9c",
+      "libbsd.so.0": "e4ad21c203d8e8b9b7f49071311339af6b438026e1ad236403e3b379b022f23d",
+      "libgpg-error.so.0": "ed682e103b671d628ef11f19f8a5b772b8d2501ba26e4b80c055331a4c4d8dfc",
+      "libmd.so.0": "bb376813876bb214535bbbdac70f2c0c4b00baecb81557dab78a79518248df06"
+    }
+  },
+  "node": {
+    "version": "26.13.1",
+    "npm": "11.20.0",
+    "tarball_sha256": "5c063e46bab0fbc1c17cc445d7ff129cbdcd0471be6ed83b6ab864f8143bc864",
+    "binary_sha256": "d931c649850ffa7155b8ceffb400dc916ef325866e509cc52ae36e33e8fbb9a9",
+    "sqlite": "3.54.1"
+  },
+  "node_windows": {
+    "version": "26.13.1",
+    "npm": "11.20.0",
+    "zip_sha256": "e2edda75bfb089654705cf65a13b58933bfd5f57148e8ebda916f58a2474f1f7",
+    "binary_sha256": "f5109dc868ec38703ad8f305e0aceece717cb60d4889873f434017af4e96cccb",
+    "sqlite": "3.54.1"
+  },
+  "chrome": {
+    "build_id": "157.0.8103.78",
+    "archive_sha256": "f90329720fb61e5a76da9b6b509b6ad12a484c9c5df0359403e935177c6d153a",
+    "binary_sha256": "8e4c5db8c070059cb570a05c171dfcaec022d46334722ec3a16376614d687a96",
+    "tree_sha256": "72341f78ea0fa1d6c3bd967e01bc08ab6d743c91487fe048776f30a5c9eed6fd",
+    "libraries": [
+      {
+        "package": "libasound2",
+        "version": "1.2.6.1-1ubuntu1.2",
+        "deb_sha256": "dce4ce1043cde35f4bc375a4b1bd84badd5dec7e656ea2a8849edf9215bc8c33",
+        "files": {
+          "usr/lib/x86_64-linux-gnu/libasound.so.2.0.0": "9b2bd6ae0b44763493961fc287ec6f50808bc79bc6974c2a892401514e190584",
+          "usr/lib/x86_64-linux-gnu/libasound.so.2": "9b2bd6ae0b44763493961fc287ec6f50808bc79bc6974c2a892401514e190584"
+        }
+      },
+      {
+        "package": "libnspr4",
+        "version": "2:4.35-0ubuntu0.22.04.1",
+        "deb_sha256": "b3c96e4a61675c87f8d9655109346748847d859abc95f20493159d06b5aa30ef",
+        "files": {
+          "usr/lib/x86_64-linux-gnu/libnspr4.so": "c38693b813e89bdd4330b87f719d73f0b89653ddd484aa3280c42247388549d8",
+          "usr/lib/x86_64-linux-gnu/libplc4.so": "279e6c45488241b44006e604f1cea85d172111069935a0da0a74d8c687fd106d",
+          "usr/lib/x86_64-linux-gnu/libplds4.so": "9ede43d7ae46771bae1000008100fd4f382b554085c7530e0330eeda5a58d172"
+        }
+      },
+      {
+        "package": "libnss3",
+        "version": "2:3.98-0ubuntu0.22.04.5",
+        "deb_sha256": "75f3879ab9969a930b5bf4b9229345d57e2ebe310ad8ce58c9d91393d823b236",
+        "files": {
+          "usr/lib/x86_64-linux-gnu/libnss3.so": "9a98137d2ddd8bb504cdfa98c5ff70cce3e252418acb0edab9db649f110027da",
+          "usr/lib/x86_64-linux-gnu/libnssutil3.so": "de887f45cfa298ab0ec7108701c5d8c79349714a19aee9b6a6f8a327aec4abc1",
+          "usr/lib/x86_64-linux-gnu/libsmime3.so": "c70897c63f9bc923f4b49d97a6e8374faea51a57708c73032a560b304ed3bef2",
+          "usr/lib/x86_64-linux-gnu/libssl3.so": "49ca985c0b88661a403343814765ca53393c56564f73c2e106aff43e732fb79c",
+          "usr/lib/x86_64-linux-gnu/nss/libfreebl3.so": "60192152066fa0dd281c12e51f0d7a4d9b294c0aa64a1c23e5b20e5338418d42",
+          "usr/lib/x86_64-linux-gnu/nss/libfreeblpriv3.so": "b237cb4ee8097aecf482bf4c8e86cdc8f28cf98a5965ecce44d0344a4738197e",
+          "usr/lib/x86_64-linux-gnu/nss/libnssckbi.so": "1fc7092d91ba7b4b3771486fb1ecad121de0cf0dec85863dcf20f3f31f06ce91",
+          "usr/lib/x86_64-linux-gnu/nss/libnssdbm3.so": "b78021f3488e143683900f3065d270246f124593a3f724924cdafdd709beaae3",
+          "usr/lib/x86_64-linux-gnu/nss/libsoftokn3.so": "4c625de47d6d1fac712ec05808ba224e8e1f6baefefa91cdc58d67a4a361d0ae",
+          "usr/lib/x86_64-linux-gnu/libfreebl3.so": "60192152066fa0dd281c12e51f0d7a4d9b294c0aa64a1c23e5b20e5338418d42",
+          "usr/lib/x86_64-linux-gnu/libfreeblpriv3.so": "b237cb4ee8097aecf482bf4c8e86cdc8f28cf98a5965ecce44d0344a4738197e"
+        }
+      }
+    ]
+  },
+  "ffmpeg": {
+    "version_line": "ffmpeg version n8.1.3-35-gf1acb0a266-20261115 Copyright (c) 2000-2026 the FFmpeg developers",
+    "configuration": "--prefix=/ffbuild/prefix --pkg-config-flags=--static --pkg-config=pkg-config --cross-prefix=x86_64-ffbuild-linux-gnu- --arch=x86_64 --target-os=linux --enable-gpl --enable-version3 --disable-debug --enable-iconv --enable-zlib --enable-libxml2 --enable-libsoxr --enable-openssl --enable-libvmaf --enable-libxcb --enable-xlib --enable-fontconfig --enable-libharfbuzz --enable-libfreetype --enable-libfribidi --enable-lcms2 --enable-vulkan --enable-libshaderc --enable-libdav1d --enable-libvorbis --enable-librav1e --enable-librsvg --enable-libpulse --enable-gmp --enable-lzma --enable-liblcevc-dec --enable-opencl --enable-amf --enable-libaom --enable-avisynth --enable-chromaprint --enable-libdavs2 --enable-libdvdread --enable-libdvdnav --disable-libfdk-aac --enable-ffnvcodec --enable-cuda-llvm --enable-frei0r --enable-libgme --enable-libkvazaar --enable-libaribb24 --enable-libaribcaption --enable-libass --enable-libbluray --enable-libjxl --enable-libmp3lame --enable-libopus --enable-libplacebo --enable-librist --enable-libssh --enable-libtheora --enable-libvpx --enable-libwebp --enable-libzmq --enable-lv2 --enable-libvpl --enable-openal --enable-liboapv --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenh264 --enable-libopenjpeg --enable-libopenmpt --enable-librubberband --disable-schannel --enable-sdl2 --enable-libsnappy --enable-libsrt --enable-libsvtav1 --enable-libtwolame --enable-libuavs3d --enable-libdrm --enable-vaapi --enable-vapoursynth --enable-libvidstab --enable-libvvenc --disable-whisper --enable-libx264 --enable-libx265 --enable-libxavs2 --enable-libxvid --enable-libzimg --disable-libzvbi --extra-cflags=-DLIBTWOLAME_STATIC --extra-cxxflags= --extra-libs='-lgomp -ldl' --extra-ldflags=-pthread --extra-ldexeflags= --cc=x86_64-ffbuild-linux-gnu-gcc --cxx=x86_64-ffbuild-linux-gnu-g++ --ar=x86_64-ffbuild-linux-gnu-gcc-ar --ranlib=x86_64-ffbuild-linux-gnu-gcc-ranlib --nm=x86_64-ffbuild-linux-gnu-gcc-nm --extra-version=20261115",
+    "x264_core": "165",
+    "archive_sha256": "94879ca4e4d17aae5e6a30d0de16ba765df708572e4ce3f6c2623a48405be917",
+    "ffmpeg_sha256": "8823e8d5df39fd4008eb84e8c8fb5d28d3400a02b3b8edb9e3c82141c33a3a11",
+    "ffprobe_sha256": "3c65eff3750bd58a40d05b2dfef79fb27e8517916212b14d69d52d3d4e226102"
+  },
+  "fonts": {
+    "fonts_conf_sha256": "760c707e1c636c93e70ab655f7a622ef98e28646269dd0cdbb14ffc2d4361548",
+    "files": [
+      {
+        "file": "Inter-Bold.ttf",
+        "family": "Inter",
+        "style": "Bold",
+        "sha256": "288316099b1e0a47a4716d159098005eef7c0066921f34e3200393dbdb01947f",
+        "source": "https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip!extras/ttf/Inter-Bold.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "Inter-BoldItalic.ttf",
+        "family": "Inter",
+        "style": "Bold Italic",
+        "sha256": "948405a16cdc62701da5f4005ed068ca5f4d27061d98f7974ccfc37831d9581d",
+        "source": "https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip!extras/ttf/Inter-BoldItalic.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "Inter-Italic.ttf",
+        "family": "Inter",
+        "style": "Italic",
+        "sha256": "bbc051dd204b5019a1aa0bc0ae2aa8a05ab13e7a3f979fa357631dc7feb6833a",
+        "source": "https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip!extras/ttf/Inter-Italic.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "Inter-Regular.ttf",
+        "family": "Inter",
+        "style": "Regular",
+        "sha256": "40d692fce188e4471e2b3cba937be967878f631ad3ebbbdcd587687c7ebe0c82",
+        "source": "https://github.com/rsms/inter/releases/download/v4.1/Inter-4.1.zip!extras/ttf/Inter-Regular.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "JetBrainsMono-Bold.ttf",
+        "family": "JetBrains Mono",
+        "style": "Bold",
+        "sha256": "5590990c82e097397517f275f430af4546e1c45cff408bde4255dad142479dcb",
+        "source": "https://github.com/JetBrains/JetBrainsMono/releases/download/v2.304/JetBrainsMono-2.304.zip!fonts/ttf/JetBrainsMono-Bold.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "JetBrainsMono-BoldItalic.ttf",
+        "family": "JetBrains Mono",
+        "style": "Bold Italic",
+        "sha256": "4039d5ce0ed225bf9c8b2c8c6436290ae2f356b7e90d70fa666227238324aa3b",
+        "source": "https://github.com/JetBrains/JetBrainsMono/releases/download/v2.304/JetBrainsMono-2.304.zip!fonts/ttf/JetBrainsMono-BoldItalic.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "JetBrainsMono-Italic.ttf",
+        "family": "JetBrains Mono",
+        "style": "Italic",
+        "sha256": "9d0a1f7a708e6af183f1193b7e81d40da294f5c67682c085d8401c60aac8ded4",
+        "source": "https://github.com/JetBrains/JetBrainsMono/releases/download/v2.304/JetBrainsMono-2.304.zip!fonts/ttf/JetBrainsMono-Italic.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "JetBrainsMono-Regular.ttf",
+        "family": "JetBrains Mono",
+        "style": "Regular",
+        "sha256": "a0bf60ef0f83c5ed4d7a75d45838548b1f6873372dfac88f71804491898d138f",
+        "source": "https://github.com/JetBrains/JetBrainsMono/releases/download/v2.304/JetBrainsMono-2.304.zip!fonts/ttf/JetBrainsMono-Regular.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "NotoColorEmoji-Regular.ttf",
+        "family": "Noto Color Emoji",
+        "style": "Regular",
+        "sha256": "4d82a18d8d95f60ba883ce242bbadbf84a576e987745dd7ba38d71c67cff2d73",
+        "source": "https://raw.githubusercontent.com/google/fonts/cc39c4c2c304bc368c9b7c311ea2bcc6013299fe/ofl/notocoloremoji/NotoColorEmoji-Regular.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "NotoNaskhArabic-Bold.ttf",
+        "family": "Noto Naskh Arabic",
+        "style": "Bold",
+        "sha256": "380ac34b249d336e1a43c21053df440594e1e3db8f75fabd4d85b649ca1ea4c6",
+        "source": "https://raw.githubusercontent.com/notofonts/notofonts.github.io/983116fbb1e1c231cf33f1f4ec0f9456055fe1e1/fonts/NotoNaskhArabic/unhinted/ttf/NotoNaskhArabic-Bold.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "NotoNaskhArabic-Regular.ttf",
+        "family": "Noto Naskh Arabic",
+        "style": "Regular",
+        "sha256": "c34fdbd98af4dbc45ca192a23d2eeb77032add83086f5fe32957d23b3f36b221",
+        "source": "https://raw.githubusercontent.com/notofonts/notofonts.github.io/983116fbb1e1c231cf33f1f4ec0f9456055fe1e1/fonts/NotoNaskhArabic/unhinted/ttf/NotoNaskhArabic-Regular.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "NotoSans-Bold.ttf",
+        "family": "Noto Sans",
+        "style": "Bold",
+        "sha256": "87cb2d84472a7d66da659ee47b6cdb9552326e8c128245231f191b6ac72529d9",
+        "source": "https://raw.githubusercontent.com/notofonts/notofonts.github.io/983116fbb1e1c231cf33f1f4ec0f9456055fe1e1/fonts/NotoSans/unhinted/ttf/NotoSans-Bold.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "NotoSans-BoldItalic.ttf",
+        "family": "Noto Sans",
+        "style": "Bold Italic",
+        "sha256": "3d367743f371f28671d2764e911a53d7c20ec9b6aa8791d059e7090389fc52a5",
+        "source": "https://raw.githubusercontent.com/notofonts/notofonts.github.io/983116fbb1e1c231cf33f1f4ec0f9456055fe1e1/fonts/NotoSans/unhinted/ttf/NotoSans-BoldItalic.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "NotoSans-Italic.ttf",
+        "family": "Noto Sans",
+        "style": "Italic",
+        "sha256": "678288f868807d4d64a6f3b51466871d117d915780381ce9d0ed4b3bcbd06d37",
+        "source": "https://raw.githubusercontent.com/notofonts/notofonts.github.io/983116fbb1e1c231cf33f1f4ec0f9456055fe1e1/fonts/NotoSans/unhinted/ttf/NotoSans-Italic.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "NotoSans-Regular.ttf",
+        "family": "Noto Sans",
+        "style": "Regular",
+        "sha256": "f3961a9cde016d41a4879aecda1474d3a36d6bf54fa0e4643de029cc2248b0e8",
+        "source": "https://raw.githubusercontent.com/notofonts/notofonts.github.io/983116fbb1e1c231cf33f1f4ec0f9456055fe1e1/fonts/NotoSans/unhinted/ttf/NotoSans-Regular.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "NotoSansArabic-Bold.ttf",
+        "family": "Noto Sans Arabic",
+        "style": "Bold",
+        "sha256": "f4cb79f842a07d1bcf597879574358fb7010f73761396d1d0f2445dfedb4d2ca",
+        "source": "https://raw.githubusercontent.com/notofonts/notofonts.github.io/983116fbb1e1c231cf33f1f4ec0f9456055fe1e1/fonts/NotoSansArabic/unhinted/ttf/NotoSansArabic-Bold.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "NotoSansArabic-Regular.ttf",
+        "family": "Noto Sans Arabic",
+        "style": "Regular",
+        "sha256": "bd86ca02f087d7f3c3788ba458fb6b73744c7639ed276b8d870dba6def6c40d0",
+        "source": "https://raw.githubusercontent.com/notofonts/notofonts.github.io/983116fbb1e1c231cf33f1f4ec0f9456055fe1e1/fonts/NotoSansArabic/unhinted/ttf/NotoSansArabic-Regular.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "NotoSansCJK-Bold.ttc",
+        "family": "Noto Sans CJK JP, Noto Sans CJK KR, Noto Sans CJK SC, Noto Sans CJK TC, Noto Sans CJK HK, Noto Sans Mono CJK JP, Noto Sans Mono CJK KR, Noto Sans Mono CJK SC, Noto Sans Mono CJK TC, Noto Sans Mono CJK HK",
+        "style": "Bold",
+        "sha256": "faa5f3656a78b2e2d450d27fe8382c778bc2b6bb5ea29c986664a6a435056ceb",
+        "source": "https://raw.githubusercontent.com/notofonts/noto-cjk/f8d157532fbfaeda587e826d4cd5b21a49186f7c/Sans/OTC/NotoSansCJK-Bold.ttc",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "NotoSansCJK-Regular.ttc",
+        "family": "Noto Sans CJK JP, Noto Sans CJK KR, Noto Sans CJK SC, Noto Sans CJK TC, Noto Sans CJK HK, Noto Sans Mono CJK JP, Noto Sans Mono CJK KR, Noto Sans Mono CJK SC, Noto Sans Mono CJK TC, Noto Sans Mono CJK HK",
+        "style": "Regular",
+        "sha256": "b76b0433203017ca80401b2ee0dd69350349871c4b19d504c34dbdd80541690a",
+        "source": "https://raw.githubusercontent.com/notofonts/noto-cjk/f8d157532fbfaeda587e826d4cd5b21a49186f7c/Sans/OTC/NotoSansCJK-Regular.ttc",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "NotoSansHebrew-Bold.ttf",
+        "family": "Noto Sans Hebrew",
+        "style": "Bold",
+        "sha256": "dfdb3056de1f4542b888c77a1a8a750548a802e271479f56e52152423b64dde8",
+        "source": "https://raw.githubusercontent.com/notofonts/notofonts.github.io/983116fbb1e1c231cf33f1f4ec0f9456055fe1e1/fonts/NotoSansHebrew/unhinted/ttf/NotoSansHebrew-Bold.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "NotoSansHebrew-Regular.ttf",
+        "family": "Noto Sans Hebrew",
+        "style": "Regular",
+        "sha256": "04272f5600d0ec816d31d0df73b23aa8d3501ea359ebe820da31c11ffcf00853",
+        "source": "https://raw.githubusercontent.com/notofonts/notofonts.github.io/983116fbb1e1c231cf33f1f4ec0f9456055fe1e1/fonts/NotoSansHebrew/unhinted/ttf/NotoSansHebrew-Regular.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "NotoSansMath-Regular.ttf",
+        "family": "Noto Sans Math",
+        "style": "Regular",
+        "sha256": "b127e84699212b6b2ef50aff58e0ebebeec04ffe6db1b9eb9e209c8c3d97b4aa",
+        "source": "https://raw.githubusercontent.com/notofonts/notofonts.github.io/983116fbb1e1c231cf33f1f4ec0f9456055fe1e1/fonts/NotoSansMath/unhinted/ttf/NotoSansMath-Regular.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "NotoSansSymbols2-Regular.ttf",
+        "family": "Noto Sans Symbols 2",
+        "style": "Regular",
+        "sha256": "c4a0a80f0041ce4be81e2478faad22776d23edb98ae3f0d19bd37044820ecf9d",
+        "source": "https://raw.githubusercontent.com/notofonts/notofonts.github.io/983116fbb1e1c231cf33f1f4ec0f9456055fe1e1/fonts/NotoSansSymbols2/unhinted/ttf/NotoSansSymbols2-Regular.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "NotoSerif-Bold.ttf",
+        "family": "Noto Serif",
+        "style": "Bold",
+        "sha256": "24ad531e6b05ddad8c3d89572d2c93eb86a6b74e652ce7ee3c3e171de68e84c3",
+        "source": "https://raw.githubusercontent.com/notofonts/notofonts.github.io/983116fbb1e1c231cf33f1f4ec0f9456055fe1e1/fonts/NotoSerif/unhinted/ttf/NotoSerif-Bold.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "NotoSerif-BoldItalic.ttf",
+        "family": "Noto Serif",
+        "style": "Bold Italic",
+        "sha256": "1bc4f86502eaa368718f6192bee022ea9a703d5af1c18b7d291212657b63074a",
+        "source": "https://raw.githubusercontent.com/notofonts/notofonts.github.io/983116fbb1e1c231cf33f1f4ec0f9456055fe1e1/fonts/NotoSerif/unhinted/ttf/NotoSerif-BoldItalic.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "NotoSerif-Italic.ttf",
+        "family": "Noto Serif",
+        "style": "Italic",
+        "sha256": "c4b3c971741ecdb40f5a443bce754e8fe91efe761b6ea10c92be7c3597cdadc4",
+        "source": "https://raw.githubusercontent.com/notofonts/notofonts.github.io/983116fbb1e1c231cf33f1f4ec0f9456055fe1e1/fonts/NotoSerif/unhinted/ttf/NotoSerif-Italic.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "NotoSerif-Regular.ttf",
+        "family": "Noto Serif",
+        "style": "Regular",
+        "sha256": "a15cfbbc1539d707115111d672d590a3d70d4f74b4c0a315956da20ae19a14e1",
+        "source": "https://raw.githubusercontent.com/notofonts/notofonts.github.io/983116fbb1e1c231cf33f1f4ec0f9456055fe1e1/fonts/NotoSerif/unhinted/ttf/NotoSerif-Regular.ttf",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "NotoSerifCJK-Bold.ttc",
+        "family": "Noto Serif CJK JP, Noto Serif CJK KR, Noto Serif CJK SC, Noto Serif CJK TC, Noto Serif CJK HK",
+        "style": "Bold",
+        "sha256": "1505ee3b9c0890fae6302ee0e9c6fd74d690f4a55a6ace1d9944f3f6352d622d",
+        "source": "https://raw.githubusercontent.com/notofonts/noto-cjk/f8d157532fbfaeda587e826d4cd5b21a49186f7c/Serif/OTC/NotoSerifCJK-Bold.ttc",
+        "licence": "OFL-1.1"
+      },
+      {
+        "file": "NotoSerifCJK-Regular.ttc",
+        "family": "Noto Serif CJK JP, Noto Serif CJK KR, Noto Serif CJK SC, Noto Serif CJK TC, Noto Serif CJK HK",
+        "style": "Regular",
+        "sha256": "5d9c31a059600193c9d7968a998bde886ccdc77e934006ad243b41794c496a7d",
+        "source": "https://raw.githubusercontent.com/notofonts/noto-cjk/f8d157532fbfaeda587e826d4cd5b21a49186f7c/Serif/OTC/NotoSerifCJK-Regular.ttc",
+        "licence": "OFL-1.1"
+      }
+    ]
+  }
+}

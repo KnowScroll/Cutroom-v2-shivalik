@@ -1,0 +1,21 @@
+{
+  "name": "@cutroom/render",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Runtime shim, sealer, host page, capture engine, encode and join, mux, the component validation functions and the preview rungs",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "scripts": {
+    "test": "node ../../tools/run-tests.mjs unit --package render"
+  },
+  "dependencies": {
+    "@cutroom/foundations": "0.0.0",
+    "puppeteer-core": "25.17.0",
+    "zod": "4.6.7"
+  }
+}

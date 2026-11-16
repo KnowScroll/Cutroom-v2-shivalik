@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "note": "Allowed package-to-package imports. A package may import only the packages listed under it, and only through the package name (its entry point). Each package's package.json dependencies and tsconfig references match its list exactly. Derived from the 'Interfaces to other stages' sections (lld/03 to lld/09 section 3), the later-milestone rule of impl/01 section 2 (a package that needs something from a later milestone declares an interface itself) and A:M0-1; the derivation is in the M0-01b pull request.",
+  "packages": {
+    "foundations": [],
+    "render": ["foundations"],
+    "project-core": ["foundations", "render"],
+    "compiler": ["foundations", "project-core", "render"],
+    "scheduler": ["foundations", "project-core", "compiler", "render"],
+    "harness": ["foundations", "project-core", "compiler", "scheduler", "render"],
+    "studio": ["foundations", "project-core", "compiler", "scheduler", "render", "harness"],
+    "quality": ["foundations", "project-core", "compiler", "scheduler", "render", "harness", "studio"],
+    "cli": ["foundations", "project-core", "compiler", "scheduler", "render", "harness", "studio", "quality"]
+  }
+}

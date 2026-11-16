@@ -1,0 +1,37 @@
+# Design: testing §1 ("GitHub Actions"); U27, U35; L18
+# One workflow, one job, on Ubuntu: a second record of each pull request and the guard that the code also
+# passes on Linux and from a clean checkout. Nobody waits for it (orchestration §9). Render, acceptance,
+# claim and live tests never run here: they need the pinned environment and the keys. No secrets, no
+# Windows job.
+name: checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    tags: ["m*-done"]
+  workflow_dispatch:
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "26.13.1"
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - run: npm run test:linux

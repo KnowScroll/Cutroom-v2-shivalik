@@ -1,0 +1,24 @@
+{
+  "name": "@cutroom/harness",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "`ModelClient` and the MiniMax adapter, the Director loop, the tool catalogue and boundary, sub-loops, plugin registration and the audit log",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "scripts": {
+    "test": "node ../../tools/run-tests.mjs unit --package harness"
+  },
+  "dependencies": {
+    "@cutroom/foundations": "0.0.0",
+    "@cutroom/project-core": "0.0.0",
+    "@cutroom/compiler": "0.0.0",
+    "@cutroom/scheduler": "0.0.0",
+    "@cutroom/render": "0.0.0",
+    "@anthropic-ai/sdk": "1.8.0"
+  }
+}
