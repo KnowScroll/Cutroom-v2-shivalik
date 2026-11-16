@@ -10,6 +10,7 @@ import {
   BlobStore,
   nodeBlobFs,
   PROJECT_CORE_MIGRATIONS,
+  REVISION_MIGRATIONS,
 } from "../src/index.js";
 import { bytes, chunks, listTmp, setupBlobs, spyFs } from "./blob-helpers.js";
 
@@ -30,7 +31,12 @@ test("blob: codes and migration", () => {
   assert.equal(BLOB_MIGRATIONS[0]?.number, 1);
   assert.equal(BLOB_MIGRATIONS[0]?.name, "blob");
   assert.match(BLOB_MIGRATIONS[0]?.sql ?? "", /\) STRICT;/);
-  assert.deepEqual(PROJECT_CORE_MIGRATIONS, [...BLOB_MIGRATIONS]);
+  // Project Core's list is exactly blob (1) then revision (2), in number order (A:M0-9).
+  assert.deepEqual(PROJECT_CORE_MIGRATIONS, [...BLOB_MIGRATIONS, ...REVISION_MIGRATIONS]);
+  assert.deepEqual(
+    PROJECT_CORE_MIGRATIONS.map((m) => m.number),
+    [1, 2],
+  );
 });
 
 test("blob: a 1 MB ingest has the right path and hash, is read-only, and leaves tmp/ empty", async () => {
