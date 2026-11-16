@@ -15,3 +15,4 @@ States: `planned`, `implemented`, `tested`, `render-verified`, `live-verified`.
 | -------------------------------- | ------------ | ------- |
 | CLI skeleton and Space lifecycle | M0-10        | planned |
 | Director loop wiring             | M4-07        | planned |
+| Settings catalogue (`src/settings.ts`, empty: the CLI owns no setting) | M0-05 | tested |

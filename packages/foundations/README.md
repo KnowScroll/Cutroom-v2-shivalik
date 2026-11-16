@@ -19,7 +19,7 @@ States: `planned`, `implemented`, `tested`, `render-verified`, `live-verified`.
 | Canonical JSON, `hashCanonical`, `ArtifactRef`, `workKey`    | M0-03        | tested  |
 | `SettingsRegistry` with override levels and keyed values     | M0-04        | tested  |
 
-| Settings catalogue of the package (`src/settings.ts`)        | M0-05        | planned |
+| Settings catalogue of the package (`src/settings.ts`, empty: R1 owns no setting) | M0-05 | tested  |
 
 ## Settings registry (M0-04)
 

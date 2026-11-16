@@ -19,3 +19,4 @@ States: `planned`, `implemented`, `tested`, `render-verified`, `live-verified`.
 | Segment encoder, `film.concat`, `film.mux`                       | M1-05        | planned |
 | `chunk.render`, `still.render`, preview rungs                    | M1-06        | planned |
 | Validation ladder V0 to V6                                       | M1-07, M1-08 | planned |
+| Settings catalogue (`src/settings.ts`, records of its stage) | M0-05 | tested |

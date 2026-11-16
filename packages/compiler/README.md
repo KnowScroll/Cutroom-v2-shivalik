@@ -17,3 +17,4 @@ States: `planned`, `implemented`, `tested`, `render-verified`, `live-verified`.
 | Compiler front end: request, facts, resolve, validate, readiness | M2-08        | planned |
 | Track evaluator, camera, render units                            | M2-09        | planned |
 | Staging, declarations, chunks, work keys, emit, `plan_diff`      | M2-10        | planned |
+| Settings catalogue (`src/settings.ts`, records of its stage) | M0-05 | tested |
