@@ -11,7 +11,7 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { openDatabase, type Storage } from "@cutroom/project-core";
-import { DRILL_WRITER_SETTINGS, drillRegistry } from "./promotion-drill-shared.ts";
+import { drillRegistry, drillWriterSettings } from "./promotion-drill-shared.ts";
 
 const WRITER = fileURLToPath(new URL("./promotion-drill-writer.ts", import.meta.url));
 const KILLS = Number(process.env.CUTROOM_DRILL_KILLS ?? 200);
@@ -109,7 +109,7 @@ function check(storage: Storage, lastAcked: number, ackedSet: ReadonlySet<number
   return problems;
 }
 
-test("promotion drill: 200 SIGKILLs of a writer on the real storage and revision modules, 0 violations", async () => {
+test("promotion drill: 200 SIGKILLs of a writer on the real storage and revision modules, 0 violations", async (t) => {
   assert.equal(process.platform, "linux", "the drill needs Linux kill behaviour (U27); run it in WSL");
   const dir = mkdtempSync(join(homedir(), ".cutroom-drill-"));
   const started = Date.now();
@@ -126,6 +126,7 @@ test("promotion drill: 200 SIGKILLs of a writer on the real storage and revision
     let signals = 0;
     let exactlyOneUnacked = 0;
     let totalAcked = 0;
+    let finalRows = 0;
     const violations: string[] = [];
     const reopenMs: number[] = [];
     for (let k = 1; k <= KILLS; k++) {
@@ -136,7 +137,7 @@ test("promotion drill: 200 SIGKILLs of a writer on the real storage and revision
       totalAcked += kill.acked.length;
       lastAcked = Math.max(lastAcked, ...kill.acked);
       const t0 = performance.now();
-      const reopened = await openDatabase(db, { ...DRILL_WRITER_SETTINGS, migrations: drillRegistry() });
+      const reopened = await openDatabase(db, { ...drillWriterSettings(), migrations: drillRegistry() });
       if (!reopened.ok) {
         violations.push(`kill ${k}: reopen failed ${JSON.stringify(reopened)}`);
         continue;
@@ -144,6 +145,7 @@ test("promotion drill: 200 SIGKILLs of a writer on the real storage and revision
       try {
         const problems = check(reopened.value, lastAcked, ackedSet);
         const count = Number(reopened.value.prepare("SELECT count(*) AS n FROM accepted_log").get()?.n);
+        finalRows = count;
         if (count === lastAcked + 1) exactlyOneUnacked++;
         reopenMs.push(performance.now() - t0);
         for (const p of problems) violations.push(`kill ${k}: ${p}`);
@@ -153,10 +155,17 @@ test("promotion drill: 200 SIGKILLs of a writer on the real storage and revision
     }
     const sorted = [...reopenMs].sort((a, b) => a - b);
     const seconds = ((Date.now() - started) / 1000).toFixed(1);
-    console.log(
+    // Every accepted_log row is either acknowledged or the one unacknowledged commit of exactly one kill.
+    const unacknowledgedRows = finalRows - totalAcked;
+    if (unacknowledgedRows !== exactlyOneUnacked) {
+      violations.push(
+        `rows ${finalRows} minus acknowledged ${totalAcked} = ${unacknowledgedRows}, but ${exactlyOneUnacked} kills left one unacknowledged commit`,
+      );
+    }
+    t.diagnostic(
       [
         `promotion drill: seed ${SEED}, ${KILLS} kills, ${signals} delivered as SIGKILL`,
-        `  acknowledged commits in total ${totalAcked}, accepted_log rows ${lastAcked + exactlyOneUnacked}`,
+        `  accepted_log rows ${finalRows} = acknowledged ${totalAcked} + unacknowledged ${unacknowledgedRows} (one per kill that left a commit unacknowledged)`,
         `  kills that left exactly one unacknowledged commit: ${exactlyOneUnacked} of ${KILLS}`,
         `  reopen plus checks (incl. quick_check, migrations): p50 ${sorted[Math.floor(sorted.length / 2)]?.toFixed(1)} ms, max ${sorted[sorted.length - 1]?.toFixed(1)} ms`,
         `  violations: ${violations.length}; run time ${seconds}s; filesystem ${fsType}`,

@@ -6,7 +6,7 @@
 //                                               resolves write the seq to stdout, synchronously. Runs until killed.
 import { writeSync } from "node:fs";
 import { type EntityDocument, openDatabase, RevisionStore } from "@cutroom/project-core";
-import { DRILL_WRITER_SETTINGS, drillRegistry } from "./promotion-drill-shared.ts";
+import { drillRegistry, drillWriterSettings } from "./promotion-drill-shared.ts";
 
 const [mode, dbPath] = process.argv.slice(2);
 if ((mode !== "setup" && mode !== "loop") || dbPath === undefined) {
@@ -14,7 +14,7 @@ if ((mode !== "setup" && mode !== "loop") || dbPath === undefined) {
   process.exit(2);
 }
 
-const opened = await openDatabase(dbPath, { ...DRILL_WRITER_SETTINGS, migrations: drillRegistry() });
+const opened = await openDatabase(dbPath, { ...drillWriterSettings(), migrations: drillRegistry() });
 if (!opened.ok) {
   process.stderr.write(`open failed: ${JSON.stringify(opened)}\n`);
   process.exit(3);
