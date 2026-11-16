@@ -22,7 +22,7 @@ States: `planned`, `implemented`, `tested`, `render-verified`, `live-verified`.
 | --------------------------------------------------------------- | -------------- | ------- |
 | Storage adapter, grouped commits, migrations, Space mount check | M0-06          | tested  |
 | Blob store (`ingest`, `open`, `sweep`)                          | M0-07          | planned |
-| Revision store and the accepted-head swap                       | M0-08          | planned |
+| Revision store and the accepted-head swap (`src/revision`)      | M0-08          | tested  |
 | Entity schemas, write levels, kind descriptions                 | M2-01          | planned |
 | Patch envelope, authority, invariants, branches, merge          | M2-03 to M2-06 | planned |
 | Views and `project_find`                                        | M4-08a         | planned |
