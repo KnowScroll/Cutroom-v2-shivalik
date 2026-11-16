@@ -16,6 +16,6 @@ States: `planned`, `implemented`, `tested`, `render-verified`, `live-verified`.
 | Flick time, rounding half up, `parseTime`, `formatTime`      | M0-02        | planned |
 | IDs (`newEntityId`, `newJobId`) and `isHandle`               | M0-02        | planned |
 | R1 vocabularies, `Predicate`, `Need`, `Diagnostic`, `Result` | M0-02        | planned |
-| Canonical JSON, `hashCanonical`, `ArtifactRef`, `workKey`    | M0-03        | planned |
+| Canonical JSON, `hashCanonical`, `ArtifactRef`, `workKey`    | M0-03        | tested  |
 | `SettingsRegistry` with override levels and keyed values     | M0-04        | planned |
 | Settings catalogue of the package (`src/settings.ts`)        | M0-05        | planned |
