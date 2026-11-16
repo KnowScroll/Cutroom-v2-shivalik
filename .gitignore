@@ -1,0 +1,7 @@
+# Secrets: never commit
+.env
+.env.*
+!.env.example
+
+# Old archive: never read, never published
+docs/archive/cutroom-v3.1-full-system-architecture.md
