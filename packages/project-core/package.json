@@ -1,0 +1,21 @@
+{
+  "name": "@cutroom/project-core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Entity schemas, patches and validation, write authority, revisions, branches, merge, promotion, views, the storage adapter over `node:sqlite` and the blob store",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "scripts": {
+    "test": "node ../../tools/run-tests.mjs unit --package project-core"
+  },
+  "dependencies": {
+    "@cutroom/foundations": "0.0.0",
+    "@cutroom/render": "0.0.0",
+    "zod": "4.6.7"
+  }
+}

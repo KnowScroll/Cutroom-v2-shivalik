@@ -5,3 +5,10 @@
 
 # Old archive: never read, never published
 docs/archive/cutroom-v3.1-full-system-architecture.md
+
+# Build
+node_modules/
+dist/
+*.tsbuildinfo
+.tools/
+.worktrees/

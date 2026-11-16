@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "note": "Allowed package-to-package imports. A package may import only the packages listed under it, and only through the package name (its entry point). Each package's package.json dependencies and tsconfig references match its list exactly. Derived from the 'Interfaces to other stages' sections (lld/03 to lld/09 section 3) and A:M0-1's later-milestone rule (impl/01 section 2: a package that needs something from a later milestone declares an interface itself). Quality is built first (the check runner, M3 sections 2-3 and M3-07), harness later (M4), so harness imports quality: R6 section 3 and D4 (check_run, review_request, evidence_view, delivery_finalize call into quality), D10, M4-09 (R9 check IDs), M6-06 (Reviewer runtime) and M6-09 (the tool is in harness, the job chain in quality). Quality imports neither harness nor studio; studio imports harness, so the graph has no cycle (a test asserts it). The table is listed in dependency order.",
+  "packages": {
+    "foundations": [],
+    "render": ["foundations"],
+    "project-core": ["foundations", "render"],
+    "compiler": ["foundations", "project-core", "render"],
+    "scheduler": ["foundations", "project-core", "compiler", "render"],
+    "quality": ["foundations", "project-core", "compiler", "scheduler", "render"],
+    "harness": ["foundations", "project-core", "compiler", "scheduler", "render", "quality"],
+    "studio": ["foundations", "project-core", "compiler", "scheduler", "render", "harness"],
+    "cli": ["foundations", "project-core", "compiler", "scheduler", "render", "harness", "studio", "quality"]
+  }
+}

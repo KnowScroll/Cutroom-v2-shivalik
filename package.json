@@ -1,0 +1,37 @@
+{
+  "name": "cutroom-v2",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Cutroom v2: a written brief in, a finished vertical video out.",
+  "engines": {
+    "node": ">=24.15.0"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "tsc --build",
+    "check": "node tools/check/run.mjs",
+    "test": "npm run build && node tools/run-tests.mjs unit",
+    "test:linux": "npm run build && node tools/run-tests.mjs linux",
+    "test:render": "npm run build && node tools/run-tests.mjs render",
+    "test:accept": "npm run build && node tools/run-tests.mjs accept",
+    "test:claims": "npm run build && node tools/run-tests.mjs claims",
+    "test:live": "npm run build && node tools/run-tests.mjs live",
+    "test:wsl": "node tools/run-tests.mjs wsl",
+    "wp-context": "node tools/context/cli.mjs",
+    "wsl:sync": "node tools/wsl-sync.mjs",
+    "env:check": "node tools/env-check/cli.mjs",
+    "pins:record": "node tools/pins-record.mjs"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.8",
+    "@puppeteer/browsers": "3.2.7",
+    "@types/node": "26.6.6",
+    "fast-check": "4.10.2",
+    "puppeteer-core": "25.17.0",
+    "typescript": "7.0.2",
+    "yauzl": "3.4.0"
+  }
+}

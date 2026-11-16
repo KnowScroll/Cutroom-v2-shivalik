@@ -1,0 +1,32 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "packages/foundations"
+    },
+    {
+      "path": "packages/render"
+    },
+    {
+      "path": "packages/project-core"
+    },
+    {
+      "path": "packages/compiler"
+    },
+    {
+      "path": "packages/scheduler"
+    },
+    {
+      "path": "packages/harness"
+    },
+    {
+      "path": "packages/studio"
+    },
+    {
+      "path": "packages/quality"
+    },
+    {
+      "path": "packages/cli"
+    }
+  ]
+}

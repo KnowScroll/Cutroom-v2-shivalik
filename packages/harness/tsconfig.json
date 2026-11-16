@@ -1,0 +1,28 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "dist"
+  },
+  "include": ["src", "test"],
+  "references": [
+    {
+      "path": "../foundations"
+    },
+    {
+      "path": "../project-core"
+    },
+    {
+      "path": "../compiler"
+    },
+    {
+      "path": "../scheduler"
+    },
+    {
+      "path": "../render"
+    },
+    {
+      "path": "../quality"
+    }
+  ]
+}

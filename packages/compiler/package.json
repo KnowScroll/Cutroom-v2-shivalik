@@ -1,0 +1,21 @@
+{
+  "name": "@cutroom/compiler",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The compile passes, the timing solver, the Render Plan, work keys, `plan_diff` and `timing_explain`",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "scripts": {
+    "test": "node ../../tools/run-tests.mjs unit --package compiler"
+  },
+  "dependencies": {
+    "@cutroom/foundations": "0.0.0",
+    "@cutroom/project-core": "0.0.0",
+    "@cutroom/render": "0.0.0"
+  }
+}

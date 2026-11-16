@@ -1,0 +1,20 @@
+{
+  "name": "@cutroom/foundations",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Time in flicks, IDs and handles, hashing and canonical JSON, artifact references, work keys, failure classes, the evidence convention and the settings registry; `Predicate` and `Need`, whose meaning R5 keeps (B:SD1)",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "scripts": {
+    "test": "node ../../tools/run-tests.mjs unit --package foundations"
+  },
+  "dependencies": {
+    "canonicalize": "5.1.0",
+    "uuid": "14.0.3"
+  }
+}

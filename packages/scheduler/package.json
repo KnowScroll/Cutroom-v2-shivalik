@@ -1,0 +1,22 @@
+{
+  "name": "@cutroom/scheduler",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Jobs, the work-key cache, futures, resource pools, intents and reconciliation, the budget ledger and `plan_to_jobs`",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "scripts": {
+    "test": "node ../../tools/run-tests.mjs unit --package scheduler"
+  },
+  "dependencies": {
+    "@cutroom/foundations": "0.0.0",
+    "@cutroom/project-core": "0.0.0",
+    "@cutroom/compiler": "0.0.0",
+    "@cutroom/render": "0.0.0"
+  }
+}
