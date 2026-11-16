@@ -68,7 +68,7 @@ The compiler converts these to flicks. Any value given in whole milliseconds con
 
 - Frame `n` covers the half-open interval `[n·T, (n+1)·T)` and is sampled at its start, where `T` is the frame period in flicks.
 - A film is exactly `N` frames long. If the planned duration is not a whole number of frames, the compiler extends it to the next frame boundary and reports the change.
-- The film's duration is exactly `N·T`. The audio sample count is `round(N·T / flicks_per_sample)`, computed from the absolute end time and never by adding up rounded per-frame counts. (Revision 1 states the rounding explicitly; at 48 kHz and the supported frame rates the division is exact.) (Revision 3: a tie rounds half up.)
+- The film's duration is exactly `N·T`. The audio sample count is `round(N·T / flicks_per_sample)`, computed from the absolute end time and never by adding up rounded per-frame counts. (Revision 1 states the rounding explicitly.) (Revision 3: a tie rounds half up.) (Build revision B1: at 48 kHz the division is exact for every `N` only where a frame period is a whole number of samples: at 24, 25, 30, 48, 50, 60, 100 and 120 fps and at 24000/1001. At 90 and 144 fps and at 30000/1001, 60000/1001 and 120000/1001 it is not, and the count is the rounded value this rule already gives.)
 
 ### 1.5 Events that fall between frames
 

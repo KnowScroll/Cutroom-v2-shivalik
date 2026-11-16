@@ -1,23 +1,13 @@
 // Design: lld/04 §2.7 and §5 (settings), lld/11 G15, G21, A:M0-3, A:M0-11, B:O8a (registry, override check, layers)
-import type {
-  ScalarValue,
-  SettingRecord,
-  SettingsDiagnostic,
-  SettingsLayer,
-  SettingsResult,
-  SettingValue,
-  WriterLevel,
-} from "./types.js";
+
+import { type Diagnostic, fail, type Result } from "../vocab/diagnostic.js";
+import type { ScalarValue, SettingRecord, SettingsLayer, SettingValue, WriterLevel } from "./types.js";
 import { rangeProblem, validateScalar, validateValue } from "./validate.js";
 
 const NAME_RE = /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/;
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
-}
-
-function fail<T>(...diagnostics: SettingsDiagnostic[]): SettingsResult<T> {
-  return { ok: false, diagnostics };
 }
 
 /** The `project.settings` patch path of a setting, plus its key when the value is keyed (B:O8a, A:M0-3). */
@@ -37,8 +27,8 @@ export class SettingsRegistry {
    * duplicate, a name that is not `area.snake_case`, a default outside its range, and a name that is a
    * prefix of another by dot-separated segments (so a value and a map never share a key).
    */
-  register(owner: string, records: readonly SettingRecord[]): SettingsResult<readonly SettingRecord[]> {
-    const problems: SettingsDiagnostic[] = [];
+  register(owner: string, records: readonly SettingRecord[]): Result<readonly SettingRecord[]> {
+    const problems: Diagnostic[] = [];
     const accepted: SettingRecord[] = [];
     const taken = new Set<string>(this.records.keys());
     if (typeof owner !== "string" || owner === "") {
@@ -138,12 +128,7 @@ export class SettingsRegistry {
    * setting, `key` names the one key written (`value` is that key's value); without `key`, `value` is an
    * object of keys. An add-only list refuses an override that drops a default member.
    */
-  checkOverride(
-    name: string,
-    value: unknown,
-    writer_level: WriterLevel,
-    key?: string,
-  ): SettingsResult<undefined> {
+  checkOverride(name: string, value: unknown, writer_level: WriterLevel, key?: string): Result<undefined> {
     const rec = this.records.get(name);
     if (rec === undefined) {
       return fail({
@@ -157,7 +142,7 @@ export class SettingsRegistry {
     if (rec.override_by === "human" && writer_level !== "human") {
       return fail({ code: "FIELD_AUTHORITY", path, expected: "level human", got: writer_level });
     }
-    let problems: SettingsDiagnostic[];
+    let problems: Diagnostic[];
     if (key !== undefined) {
       if (rec.type !== "keyed" || rec.range.kind !== "keyed") {
         return fail({ code: "VALUE_OUT_OF_RANGE", path, expected: "a setting that is not keyed", got: key });
@@ -198,7 +183,7 @@ export class SettingsRegistry {
    * `project.settings`, `quality_intent.settings_overrides`; A:M0-11). A keyed value merges key by key.
    * It validates ranges, not authority; authority is `checkOverride`'s job at the write.
    */
-  resolve(name: string, layers: readonly SettingsLayer[]): SettingsResult<SettingValue> {
+  resolve(name: string, layers: readonly SettingsLayer[]): Result<SettingValue> {
     const rec = this.records.get(name);
     if (rec === undefined) {
       return fail({
@@ -229,7 +214,7 @@ export class SettingsRegistry {
     path: string,
     value: unknown,
     key?: string,
-  ): SettingsDiagnostic[] {
+  ): Diagnostic[] {
     if (range.kind !== "list" || range.add_only !== true || !Array.isArray(value)) return [];
     const base =
       key === undefined

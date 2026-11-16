@@ -10,6 +10,8 @@ export {
 export {
   type ArtifactRef,
   type ArtifactRefResult,
+  ArtifactRefSchema,
+  HashStringSchema,
   isHashString,
   parseArtifactRef,
   revisionId,

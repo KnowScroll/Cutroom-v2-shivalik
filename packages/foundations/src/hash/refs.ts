@@ -1,14 +1,19 @@
 // Design: lld/02 §2.2-2.4 (revision IDs, ArtifactRef, work key); lld/04 §2.5 (manifest hashing)
+import { z } from "zod";
 import { hashCanonical, type JsonValue } from "./canonical.js";
 
 const HASH_PATTERN = /^sha256:[0-9a-f]{64}$/;
 
-/** `sha256:` plus the hash of the bytes, with media type and size (lld/02 §2.3). */
-export interface ArtifactRef {
-  readonly hash: string;
-  readonly media_type: string;
-  readonly size: number;
-}
+/** `sha256:` + 64 lowercase hex digits. */
+export const HashStringSchema = z.string().regex(HASH_PATTERN);
+
+/** `sha256:` plus the hash of the bytes, with media type and size (lld/02 §2.3). Unknown fields are refused. */
+export const ArtifactRefSchema = z.strictObject({
+  hash: HashStringSchema,
+  media_type: z.string().regex(/^[^\s/]+\/[^\s/]+$/),
+  size: z.number().int().safe().nonnegative(),
+});
+export type ArtifactRef = z.infer<typeof ArtifactRefSchema>;
 
 export type ArtifactRefResult =
   | { readonly ok: true; readonly value: ArtifactRef }
@@ -18,7 +23,7 @@ export function isHashString(value: unknown): value is string {
   return typeof value === "string" && HASH_PATTERN.test(value);
 }
 
-/** Hand-written validator (zod is not yet a foundations dependency). Unknown fields are refused. */
+/** Validator with per-field messages; accepts exactly what `ArtifactRefSchema` accepts. */
 export function parseArtifactRef(input: unknown): ArtifactRefResult {
   const errors: string[] = [];
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
