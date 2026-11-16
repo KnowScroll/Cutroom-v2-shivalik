@@ -133,6 +133,10 @@ stream.on("test:fail", (data) => {
   const message = [cause?.code, cause?.message, error?.message].filter(Boolean).join(" | ") || "failed";
   results.push({ id: idOf(data), file: rel(root, data.file ?? ""), status: "fail", message });
 });
+// A test may report numbers with t.diagnostic(); the runner prints those of test files (not its own summary).
+stream.on("test:diagnostic", (data) => {
+  if (data.file) console.log(data.message);
+});
 // Draining the stream is what makes it run.
 for await (const _event of stream) void _event;
 
