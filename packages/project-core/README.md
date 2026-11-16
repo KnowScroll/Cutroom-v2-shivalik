@@ -21,7 +21,7 @@ States: `planned`, `implemented`, `tested`, `render-verified`, `live-verified`.
 | Capability                                                      | Work package   | State   |
 | --------------------------------------------------------------- | -------------- | ------- |
 | Storage adapter, grouped commits, migrations, Space mount check | M0-06          | tested  |
-| Blob store (`ingest`, `open`, `sweep`)                          | M0-07          | planned |
+| Blob store (`ingest`, `open`, `sweep`)                          | M0-07          | tested  |
 | Revision store and the accepted-head swap                       | M0-08          | planned |
 | Entity schemas, write levels, kind descriptions                 | M2-01          | planned |
 | Patch envelope, authority, invariants, branches, merge          | M2-03 to M2-06 | planned |
