@@ -39,10 +39,13 @@ const str = (name: string, def: string, values: readonly string[], o: Opts = {})
 
 const H = { human: true } as const;
 const NO_TEXT = "the registry has no free-text string range, so the range lists the design's value only";
+const FFMPEG = "FFmpeg filter bounds (sidechaincompress, lld/08 §2 step 3), ASSUMED from its documentation";
 
 export const STUDIO_SETTINGS: readonly SettingRecord[] = [
   num("delivery.audio.loudness_lufs", -14, -70, 0, H),
-  num("delivery.audio.limit_dbtp", -3, -20, 0),
+  num("delivery.audio.limit_dbtp", -3, -20, -2.5, {
+    note: "max is verify_max_dbtp (-1.0) minus the 1.5 dB AAC true-peak rise of lld/11 §12.2",
+  }),
   num("delivery.audio.verify_max_dbtp", -1, -20, 0, H),
   num("mix.master_tolerance_lu", 0.5, 0, NO_MAX),
   int("mix.master_max_passes", 3, 1, NO_MAX),
@@ -50,9 +53,9 @@ export const STUDIO_SETTINGS: readonly SettingRecord[] = [
   num("mix.music_lufs", -24, -70, 0),
   num("mix.sfx_peak_dbfs", -10, -60, 0),
   num("mix.duck_threshold", 0.05, 0, 1),
-  num("mix.duck_ratio", 6, 1, NO_MAX),
-  int("mix.duck_attack_ms", 20, 0, NO_MAX),
-  int("mix.duck_release_ms", 300, 0, NO_MAX),
+  num("mix.duck_ratio", 6, 1, 20, { note: FFMPEG }),
+  num("mix.duck_attack_ms", 20, 0.01, 2000, { note: FFMPEG }),
+  num("mix.duck_release_ms", 300, 0.01, 9000, { note: FFMPEG }),
   num("mix.duck_mix", 0.8, 0, 1),
   {
     name: "voice.final_timing",
@@ -60,12 +63,44 @@ export const STUDIO_SETTINGS: readonly SettingRecord[] = [
     type: "string_list",
     default: ["native", "aligned"],
     override_by: "human",
-    range: { kind: "list", members: ["native", "aligned"] },
+    range: { kind: "list", members: ["native", "aligned"], min_length: 1 },
     note: `${DERIVED}; the design gives no default, read as the set of take timings a final compile accepts`,
   },
   int("voice.default_takes", 2, 1, 5, { given: true }),
+  // lld/08 §5 row voice.default_voice: unset; the Director picks an engine voice ID (U17, U9). B2: free text.
+  {
+    name: "voice.default_voice",
+    owner: OWNER,
+    type: "string",
+    default: null,
+    override_by: "director",
+    range: { kind: "text", max_length: 100, optional: true },
+    note: `${DERIVED}; max_length 100 is a free choice for a voice ID`,
+  },
+  // lld/08 §5 row fetch.contact_identity: unset, human (G12, U5). B2: free text (an email or URL).
+  {
+    name: "fetch.contact_identity",
+    owner: OWNER,
+    type: "string",
+    default: null,
+    override_by: "human",
+    range: { kind: "text", max_length: 320, optional: true },
+    note: `${DERIVED}; max_length 320 is the longest email address`,
+  },
+  // lld/08 §5 row screen_capture.viewport_px: 1280 x 800, one setting (B2).
+  {
+    name: "screen_capture.viewport_px",
+    owner: OWNER,
+    type: "number_list",
+    default: [1280, 800],
+    override_by: "director",
+    range: { kind: "number_list", min: 1, max: 16384, integer: true, min_length: 2, max_length: 2 },
+    note: `${DERIVED}; [width, height], 16384 is a free upper bound`,
+  },
   str("voice.engine", "hexgrad/kokoro-82m", ["hexgrad/kokoro-82m"], { ...H, note: NO_TEXT }),
-  str("voice.response_format", "pcm", ["pcm"], { note: NO_TEXT }),
+  str("voice.response_format", "pcm", ["pcm"], {
+    note: "L12 fixes PCM and the adapter decodes PCM only (U17 lists mp3 or pcm)",
+  }),
   str("voice.provider_only", "deepinfra", ["deepinfra"], { ...H, note: NO_TEXT }),
   num("align.lipsync_min_fraction", 0.95, 0.5, 1, { given: true }),
   int("align.word_end_offset_ms", 80, 0, 200, { given: true }),

@@ -1,4 +1,4 @@
-// Design: lld/06 §5 (R5 named settings), lld/04 §2.7 (G15), lld/11 K5, K7, U11, B:M3-7, B:M3-11-resend, B:M3-12
+// Design: lld/06 §5 (R5 named settings), lld/04 §2.7 (G15), lld/11 K5, K7, U11, §12 F12, B3, B:M3-7, B:M3-11-resend
 import type { SettingRecord } from "@cutroom/foundations";
 
 const OWNER = "scheduler";

@@ -30,6 +30,7 @@ test("harness: the human rows are human and no other row is", () => {
 test("harness: sampled defaults match the design text", () => {
   const reg = fresh();
   const want: ReadonlyArray<readonly [string, unknown]> = [
+    ["director.budget_wake_fractions", [0.5, 0.8, 0.95]], // lld/07 §5 row director.budget_wake_fractions
     ["context.hard_max_tokens", 400000], // lld/07 §5 row context.compact_at_tokens / context.hard_max_tokens
     ["tool.result_max_tokens", { default: 2000, project_read: 4000, web_fetch: 8000 }], // lld/07 §5 row tool.result_max_tokens
     ["audit.retention_days", "keep_all"], // lld/07 §5 row audit.retention_days (A:M0-3)

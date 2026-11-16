@@ -5,16 +5,48 @@ export type OverrideLevel = "human" | "director";
 export type WriterLevel = OverrideLevel;
 
 /** The type of one value. `integer_or_string` is the A:M0-3 form (`audit.retention_days`: days or `keep_all`). */
-export type ScalarType = "number" | "integer" | "string" | "boolean" | "string_list" | "integer_or_string";
+export type ScalarType =
+  | "number"
+  | "integer"
+  | "string"
+  | "boolean"
+  | "string_list"
+  | "integer_or_string"
+  | "number_list";
 export type SettingType = ScalarType | "keyed";
 
-export type ScalarValue = number | string | boolean | readonly string[];
-export type SettingValue = ScalarValue | Readonly<Record<string, ScalarValue>>;
+export type ScalarValue = number | string | boolean | readonly string[] | readonly number[];
+/** `null` is the unset default of a setting whose range is marked `optional` (B2). */
+export type SettingValue = ScalarValue | null | Readonly<Record<string, ScalarValue>>;
 
 /** Inclusive numeric bounds. `type: integer` additionally requires a whole number. */
 export type NumberRange = { readonly kind: "number_range"; readonly min: number; readonly max: number };
 /** A closed list of allowed string values. */
 export type ValuesRange = { readonly kind: "values"; readonly values: readonly string[] };
+/**
+ * Free text for `type: "string"` (B2): at most `max_length` characters, the whole value matching `pattern`
+ * (a regular expression source) when given. `optional: true` allows the unset default `null`.
+ */
+export type TextRange = {
+  readonly kind: "text";
+  readonly max_length: number;
+  readonly pattern?: string;
+  readonly optional?: boolean;
+};
+/**
+ * A list of numbers for `type: "number_list"` (B2): each element within `min` to `max` (whole numbers when
+ * `integer`), between `min_length` and `max_length` elements, strictly ascending when `ascending`.
+ */
+export type NumberListRange = {
+  readonly kind: "number_list";
+  readonly min: number;
+  readonly max: number;
+  readonly integer?: boolean;
+  readonly min_length: number;
+  readonly max_length: number;
+  readonly ascending?: boolean;
+  readonly optional?: boolean;
+};
 export type BooleanRange = { readonly kind: "boolean" };
 /**
  * A list of strings. `members` limits what it may hold (omitted: any string). `add_only` means an
@@ -24,11 +56,20 @@ export type ListRange = {
   readonly kind: "list";
   readonly members?: readonly string[];
   readonly add_only?: boolean;
+  /** At least this many members (B2 review: `voice.final_timing` may not be empty). */
+  readonly min_length?: number;
 };
 /** A value accepted if any part accepts it, such as an integer range or listed values. */
 export type AnyOfRange = { readonly kind: "any_of"; readonly parts: readonly (NumberRange | ValuesRange)[] };
 
-export type ScalarRange = NumberRange | ValuesRange | BooleanRange | ListRange | AnyOfRange;
+export type ScalarRange =
+  | NumberRange
+  | ValuesRange
+  | TextRange
+  | NumberListRange
+  | BooleanRange
+  | ListRange
+  | AnyOfRange;
 
 /** One key of a keyed value: its own type and range (A:M0-3). */
 export type KeySpec = { readonly type: ScalarType; readonly range: ScalarRange };

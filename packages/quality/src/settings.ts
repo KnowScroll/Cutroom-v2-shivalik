@@ -79,6 +79,16 @@ export const QUALITY_SETTINGS: readonly SettingRecord[] = [
   int("final.match_samples", 30, 1, NO_MAX, H),
   num("final.min_integrated_lufs", -40, -120, 0, H),
   num("regress.psnr_min_db", 50, 0, NO_MAX),
+  // lld/09 §5 row sheet.cell_px: 360 x 640, one setting (B2).
+  {
+    name: "sheet.cell_px",
+    owner: OWNER,
+    type: "number_list",
+    default: [360, 640],
+    override_by: "director",
+    range: { kind: "number_list", min: 1, max: 16384, integer: true, min_length: 2, max_length: 2 },
+    note: `${DERIVED}; [width, height], 16384 is a free upper bound`,
+  },
   int("sheet.max_cells", 16, 1, NO_MAX),
   num("sheet.film_interval_s", 2, 0.1, NO_MAX),
   int("sheet.strip_spacing_ms", 100, 1, NO_MAX),

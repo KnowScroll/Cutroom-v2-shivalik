@@ -11,6 +11,7 @@ const HUMAN: readonly string[] = [
   "voice.provider_only",
   "music.grid_tolerance_ms",
   "rights.share_alike_ok",
+  "fetch.contact_identity",
   "fetch.max_bytes_image",
   "fetch.max_bytes_video",
   "fetch.max_bytes_document",
@@ -45,8 +46,10 @@ test("studio: the human rows are human and no other row is", () => {
 test("studio: sampled defaults match the design text", () => {
   const reg = fresh();
   const want: ReadonlyArray<readonly [string, unknown]> = [
-    ["delivery.audio.limit_dbtp", -3], // lld/08 §5 row delivery.audio.limit_dbtp (-3.0; lld/11 §6 says -1.5, the later R7 table and A:M1-3 win)
+    ["delivery.audio.limit_dbtp", -3], // lld/08 §5 row delivery.audio.limit_dbtp (-3.0; lld/11 §6 says -1.5, the later lld/11 §12.2 (1.5 dB AAC true-peak rise) and A:M1-3 win)
     ["rights.share_alike_ok", false], // lld/08 §5 row rights.share_alike_ok (U4)
+    ["fetch.contact_identity", null], // lld/08 §5 row fetch.contact_identity (unset, U5)
+    ["screen_capture.viewport_px", [1280, 800]], // lld/08 §5 row screen_capture.viewport_px
     ["screen_capture.allowed_origins", []], // lld/08 §5 row screen_capture.allowed_origins (U6)
     ["align.word_end_offset_ms", 80], // lld/08 §5 row align.word_end_offset_ms (L10)
     ["captions.min_duration_ms", { phrase: 700, word_pop: 400, highlight: 400 }], // lld/08 §5 row captions.min_duration_ms

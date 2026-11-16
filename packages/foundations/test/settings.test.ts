@@ -371,3 +371,118 @@ test("boolean, enum and number-range types", () => {
   assert.equal(reg.checkOverride("x.ratio", 0.25, "director").ok, true);
   assert.deepEqual(codesOf(reg.checkOverride("x.ratio", Number.NaN, "director")), ["VALUE_OUT_OF_RANGE"]);
 });
+
+const contact: SettingRecord = {
+  name: "fetch.contact_identity",
+  owner: "test",
+  type: "string",
+  default: null,
+  override_by: "human",
+  range: { kind: "text", max_length: 8, pattern: "[a-z@.]+", optional: true },
+};
+const wake: SettingRecord = {
+  name: "director.budget_wake_fractions",
+  owner: "test",
+  type: "number_list",
+  default: [0.5, 0.8, 0.95],
+  override_by: "director",
+  range: { kind: "number_list", min: 0.01, max: 0.99, min_length: 1, max_length: 4, ascending: true },
+};
+const size: SettingRecord = {
+  name: "screen_capture.viewport_px",
+  owner: "test",
+  type: "number_list",
+  default: [1280, 800],
+  override_by: "director",
+  range: { kind: "number_list", min: 1, max: 100000, integer: true, min_length: 2, max_length: 2 },
+};
+
+test("text range: unset default, resolve returns null, text is length and pattern checked", () => {
+  const reg = new SettingsRegistry();
+  assert.equal(reg.register("test", [contact]).ok, true);
+  const r = reg.resolve("fetch.contact_identity", []);
+  assert.deepEqual(r.ok && r.value, null);
+  const set = reg.resolve("fetch.contact_identity", [
+    { source: "p", form: "nested", values: { fetch: { contact_identity: "a@b.co" } } },
+  ]);
+  assert.deepEqual(set.ok && set.value, "a@b.co");
+  assert.equal(reg.checkOverride("fetch.contact_identity", "a@b.co", "human").ok, true);
+  assert.equal(reg.checkOverride("fetch.contact_identity", null, "human").ok, true);
+  assert.deepEqual(codesOf(reg.checkOverride("fetch.contact_identity", "a@b.co.uk.x", "human")), [
+    "VALUE_OUT_OF_RANGE",
+  ]);
+  assert.deepEqual(codesOf(reg.checkOverride("fetch.contact_identity", "A B", "human")), [
+    "VALUE_OUT_OF_RANGE",
+  ]);
+  assert.deepEqual(codesOf(reg.checkOverride("fetch.contact_identity", 5, "human")), ["VALUE_OUT_OF_RANGE"]);
+});
+
+test("null default is refused where the range is not optional", () => {
+  const plain: SettingRecord = {
+    ...contact,
+    name: "x.text",
+    range: { kind: "text", max_length: 8 },
+  };
+  assert.deepEqual(codesOf(new SettingsRegistry().register("test", [plain])), ["VALUE_OUT_OF_RANGE"]);
+  const num = { ...num0(), default: null } as unknown as SettingRecord;
+  assert.deepEqual(codesOf(new SettingsRegistry().register("test", [num])), ["VALUE_OUT_OF_RANGE"]);
+});
+
+function num0(): SettingRecord {
+  return {
+    name: "x.n",
+    owner: "test",
+    type: "integer",
+    default: 1,
+    override_by: "director",
+    range: { kind: "number_range", min: 0, max: 5 },
+  };
+}
+
+test("number_list range: length, element range, integers and ascending order", () => {
+  const reg = new SettingsRegistry();
+  assert.equal(reg.register("test", [wake, size]).ok, true);
+  assert.equal(reg.checkOverride("director.budget_wake_fractions", [0.3, 0.6], "director").ok, true);
+  for (const bad of [[], [0.1, 0.2, 0.3, 0.4, 0.5], [0, 0.5], [0.5, 1], [0.5, 0.5], [0.8, 0.5], ["a"], 0.5]) {
+    assert.deepEqual(codesOf(reg.checkOverride("director.budget_wake_fractions", bad, "director")), [
+      "VALUE_OUT_OF_RANGE",
+    ]);
+  }
+  assert.equal(reg.checkOverride("screen_capture.viewport_px", [1080, 1920], "director").ok, true);
+  for (const bad of [[1080], [1, 2, 3], [1080.5, 1920], [0, 5], [1080, 1e9]]) {
+    assert.deepEqual(codesOf(reg.checkOverride("screen_capture.viewport_px", bad, "director")), [
+      "VALUE_OUT_OF_RANGE",
+    ]);
+  }
+  const outside = { ...size, name: "x.size", default: [1, 2, 3] };
+  assert.deepEqual(codesOf(new SettingsRegistry().register("test", [outside])), ["VALUE_OUT_OF_RANGE"]);
+});
+
+test("malformed text and number_list ranges are incomplete records", () => {
+  const badText = { ...contact, range: { kind: "text", max_length: 0 } } as unknown as SettingRecord;
+  const badPattern = {
+    ...contact,
+    range: { kind: "text", max_length: 4, pattern: "(" },
+  } as unknown as SettingRecord;
+  const badList = {
+    ...wake,
+    range: { kind: "number_list", min: 1, max: 0, min_length: 1, max_length: 2 },
+  } as unknown as SettingRecord;
+  for (const r of [badText, badPattern, badList])
+    assert.deepEqual(codesOf(new SettingsRegistry().register("test", [r])), ["SETTING_RECORD_INCOMPLETE"]);
+});
+
+test("list range min_length refuses a shorter list", () => {
+  const rec: SettingRecord = {
+    name: "voice.final_timing",
+    owner: "test",
+    type: "string_list",
+    default: ["native", "aligned"],
+    override_by: "human",
+    range: { kind: "list", members: ["native", "aligned"], min_length: 1 },
+  };
+  const reg = new SettingsRegistry();
+  assert.equal(reg.register("test", [rec]).ok, true);
+  assert.equal(reg.checkOverride("voice.final_timing", ["aligned"], "human").ok, true);
+  assert.deepEqual(codesOf(reg.checkOverride("voice.final_timing", [], "human")), ["VALUE_OUT_OF_RANGE"]);
+});

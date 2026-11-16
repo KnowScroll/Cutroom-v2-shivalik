@@ -37,3 +37,27 @@ test("cli: owns no named setting; every package's catalogue registers into one r
   ] as const)
     assert.equal(reg.get(name)?.owner, owner, name);
 });
+
+test("cli: the names lld/07 §5 lists as gone are not registered", () => {
+  const reg = new SettingsRegistry();
+  for (const [owner, records] of [
+    ["render", RENDER_SETTINGS],
+    ["project-core", PROJECT_CORE_SETTINGS],
+    ["compiler", COMPILER_SETTINGS],
+    ["scheduler", SCHEDULER_SETTINGS],
+    ["quality", QUALITY_SETTINGS],
+    ["harness", HARNESS_SETTINGS],
+    ["studio", STUDIO_SETTINGS],
+  ] as const)
+    assert.equal(reg.register(owner, records).ok, true, owner);
+  for (const gone of [
+    "llm.rpm_ceiling",
+    "llm.tpm_ceiling",
+    "llm.max_concurrent_requests",
+    "llm.retry_max",
+    "budget.wrapup_reserve_usd",
+    "budget.thresholds",
+    "fetch.max_text_tokens",
+  ])
+    assert.equal(reg.get(gone), undefined, gone);
+});

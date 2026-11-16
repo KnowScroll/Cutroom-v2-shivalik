@@ -66,7 +66,9 @@ const RUNG_SETTINGS: readonly SettingRecord[] = [
   int("rung.review.quality", 90, 1, 100),
   str("rung.review.preset", "fast", X264_PRESETS),
   int("rung.review.crf", 23, 0, 51),
-  num("rung.final.scale", 1, 0.01, 1),
+  num("rung.final.scale", 1, 1, 1, {
+    note: "listed value 1 only: lld/03 §2.12 final is 1 to 1080 x 1920, delivery",
+  }),
   int("rung.final.step", 1, 1, NO_MAX),
   str("rung.final.intermediate", "png", ["jpeg", "png"]),
   str("rung.final.preset", "medium", X264_PRESETS),
