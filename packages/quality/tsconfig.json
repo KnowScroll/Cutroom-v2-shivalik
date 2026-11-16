@@ -20,12 +20,6 @@
     },
     {
       "path": "../render"
-    },
-    {
-      "path": "../harness"
-    },
-    {
-      "path": "../studio"
     }
   ]
 }

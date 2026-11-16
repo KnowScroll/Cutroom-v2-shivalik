@@ -4,7 +4,7 @@ The check runner, the check catalogue, the Reviewer protocol, Quality Intent rul
 
 - **Entry point:** `packages/quality/src/index.ts`, built to `dist/src/index.js`. Other packages import only `@cutroom/quality`, never a file inside it.
 - **Design:** `lld/09` (R9).
-- **May import:** `@cutroom/foundations`, `@cutroom/project-core`, `@cutroom/compiler`, `@cutroom/scheduler`, `@cutroom/render`, `@cutroom/harness`, `@cutroom/studio` (`tools/dependency-edges.json`).
+- **May import:** `@cutroom/foundations`, `@cutroom/project-core`, `@cutroom/compiler`, `@cutroom/scheduler`, `@cutroom/render` (`tools/dependency-edges.json`).
 - **Focused test command:** `npm test -w @cutroom/quality` (builds, then runs this package's unit tests; from the repository root).
 
 ## Capabilities

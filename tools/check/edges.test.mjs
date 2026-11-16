@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { edgeFixture } from "../lib/tmp-workspace.mjs";
-import { checkEdges, findImports } from "./edges.mjs";
+import { checkEdges, findCycles, findImports } from "./edges.mjs";
 
 const messages = (violations) => violations.map((v) => `${v.file}:${v.line}: ${v.message}`);
 
@@ -135,6 +135,39 @@ test("dynamic imports and re-exports are found; commented imports are not", () =
       ["./y.js", 2],
     ],
   );
+});
+
+test("a cycle in the edge table itself fails the check", () => {
+  assert.deepEqual(findCycles({ a: [], b: ["a"] }), []);
+  assert.deepEqual(findCycles({ a: ["b"], b: ["c"], c: ["a"] })[0], ["a", "b", "c", "a"]);
+  const ws = edgeFixture({
+    "tools/dependency-edges.json": JSON.stringify({ schema: 1, packages: { a: ["b"], b: ["a"] } }),
+    "packages/a/package.json": JSON.stringify({
+      name: "@cutroom/a",
+      dependencies: { "@cutroom/b": "0.0.0" },
+    }),
+    "packages/a/tsconfig.json": JSON.stringify({ references: [{ path: "../b" }] }),
+  });
+  try {
+    const out = messages(checkEdges(ws.root));
+    assert.ok(
+      out.some((m) => /dependency-edges\.json:1: the edge table has a cycle: a -> b -> a/.test(m)),
+      out.join("\n"),
+    );
+  } finally {
+    ws.cleanup();
+  }
+});
+
+test("the real edge table is acyclic and puts quality before harness (A:M0-1)", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { dirname, join, resolve } = await import("node:path");
+  const { fileURLToPath } = await import("node:url");
+  const root = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
+  const table = JSON.parse(readFileSync(join(root, "tools", "dependency-edges.json"), "utf8")).packages;
+  assert.deepEqual(findCycles(table), []);
+  assert.ok(table.harness.includes("quality"));
+  assert.ok(!table.quality.includes("harness") && !table.quality.includes("studio"));
 });
 
 test("the real workspace has no edge violations", async () => {

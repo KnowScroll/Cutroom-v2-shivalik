@@ -26,6 +26,27 @@ export function findImports(text) {
   return found;
 }
 
+/** Cycles in the edge table (impl/01 §2: no import cycles between packages), each as a path a -> ... -> a. */
+export function findCycles(table) {
+  const cycles = [];
+  const state = new Map(); // 1 = on the stack, 2 = done
+  const stack = [];
+  const visit = (name) => {
+    if (state.get(name) === 2) return;
+    if (state.get(name) === 1) {
+      cycles.push([...stack.slice(stack.indexOf(name)), name]);
+      return;
+    }
+    state.set(name, 1);
+    stack.push(name);
+    for (const next of table[name] ?? []) visit(next);
+    stack.pop();
+    state.set(name, 2);
+  };
+  for (const name of Object.keys(table)) visit(name);
+  return cycles;
+}
+
 function readJson(path) {
   return JSON.parse(readFileSync(path, "utf8"));
 }
@@ -44,6 +65,9 @@ export function checkEdges(root) {
   const add = (file, line, message) => violations.push({ file: rel(root, file), line, message });
   const table = readJson(join(root, "tools", "dependency-edges.json")).packages;
   const names = Object.keys(table);
+  for (const cycle of findCycles(table)) {
+    add(join(root, "tools", "dependency-edges.json"), 1, `the edge table has a cycle: ${cycle.join(" -> ")}`);
+  }
   const rootPkg = existsSync(join(root, "package.json")) ? readJson(join(root, "package.json")) : {};
   const rootDeps = new Set(Object.keys({ ...rootPkg.dependencies, ...rootPkg.devDependencies }));
 

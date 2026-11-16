@@ -4,7 +4,7 @@
 
 - **Entry point:** `packages/harness/src/index.ts`, built to `dist/src/index.js`. Other packages import only `@cutroom/harness`, never a file inside it.
 - **Design:** `lld/07` (R6).
-- **May import:** `@cutroom/foundations`, `@cutroom/project-core`, `@cutroom/compiler`, `@cutroom/scheduler`, `@cutroom/render` (`tools/dependency-edges.json`).
+- **May import:** `@cutroom/foundations`, `@cutroom/project-core`, `@cutroom/compiler`, `@cutroom/scheduler`, `@cutroom/render`, `@cutroom/quality` (`tools/dependency-edges.json`).
 - **Focused test command:** `npm test -w @cutroom/harness` (builds, then runs this package's unit tests; from the repository root).
 
 ## Capabilities
