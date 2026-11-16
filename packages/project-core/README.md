@@ -7,6 +7,13 @@ Entity schemas, patches and validation, write authority, revisions, branches, me
 - **May import:** `@cutroom/foundations`, `@cutroom/render` (`tools/dependency-edges.json`).
 - **Focused test command:** `npm test -w @cutroom/project-core` (builds, then runs this package's unit tests; from the repository root).
 
+## Storage notes
+
+- Grouped writer members are synchronous functions and cannot nest: a `tx` call from inside a member is rejected.
+- Deferred constraints are not supported inside members. A failure at `COMMIT` rejects every member of the group (the transaction is rolled back and the writer carries on), so every caller must be able to repeat a request (R5 section 2.1).
+- `openDatabase` does not check the mount; start-up (M0-10) calls `checkSpaceMount` first.
+- `DB_DAMAGED` is returned only for corruption (SQLite result codes 11 and 26, extended codes included); any other error from `quick_check`, such as busy, is thrown.
+
 ## Capabilities
 
 States: `planned`, `implemented`, `tested`, `render-verified`, `live-verified`.

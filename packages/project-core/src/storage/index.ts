@@ -1,6 +1,13 @@
 // Design: lld/04 §2.6 (storage module exports)
 export { STORAGE_CODES, type StorageCode } from "./codes.js";
-export { isOldSqlite, MIN_SQLITE_VERSION, type OpenOptions, openDatabase, Storage } from "./database.js";
+export {
+  isCorruption,
+  isOldSqlite,
+  MIN_SQLITE_VERSION,
+  type OpenOptions,
+  openDatabase,
+  Storage,
+} from "./database.js";
 export {
   BUSY_TIMEOUT_MS,
   type Driver,

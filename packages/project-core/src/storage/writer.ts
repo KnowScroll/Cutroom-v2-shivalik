@@ -34,11 +34,16 @@ function isThenable(value: unknown): boolean {
  * group's `COMMIT`. The function of a member runs at once and synchronously, so there is no queue to drain:
  * each group is committed by its own timer callback, which yields to the event loop between groups (b2b §3,
  * run A froze the process for 7.3 s by draining a queue in one turn).
+ *
+ * Members cannot nest: a `tx` call from inside a member function is rejected. Deferred constraints are not
+ * supported inside members: a failure at `COMMIT` rejects every member of the group, the transaction is
+ * rolled back and the writer carries on; a caller must be able to repeat a request anyway (R5 §2.1).
  */
 export class GroupedWriter {
   private group: Group | undefined;
   private savepoint = 0;
   private closed = false;
+  private running = false;
 
   constructor(
     private readonly db: RawDb,
@@ -54,6 +59,12 @@ export class GroupedWriter {
   }
 
   tx<T>(fn: (db: RawDb) => T, durability: Durability = "normal"): Promise<T> {
+    // A member function that calls `tx` would join or commit the group from inside another member, so one
+    // member's rollback could undo another's write, or its partial write could be committed. It is a bug in
+    // the caller: refuse it and leave the running member exactly as if the call had not happened.
+    if (this.running) {
+      return Promise.reject(new Error("tx called from inside a transaction function: members cannot nest"));
+    }
     if (this.closed) return Promise.reject(new Error("storage is closed"));
     const level: Durability =
       durability === "full" || this.settings.synchronous === "FULL" ? "full" : "normal";
@@ -75,18 +86,21 @@ export class GroupedWriter {
     if (!first) this.db.exec(`SAVEPOINT ${name}`);
     let value: T;
     try {
+      this.running = true;
       value = fn(this.db);
       if (isThenable(value)) throw new TypeError("a transaction function must be synchronous");
     } catch (error) {
+      this.running = false;
       if (first || !this.db.isTransaction) {
         // Nobody else joined yet, or SQLite already ended the transaction: the whole group goes.
-        this.abortGroup(error, first ? [] : group.members);
+        this.abortGroup(error);
       } else {
         this.db.exec(`ROLLBACK TO ${name}`);
         this.db.exec(`RELEASE ${name}`);
       }
       return Promise.reject(error);
     }
+    this.running = false;
     if (!first) this.db.exec(`RELEASE ${name}`);
     return new Promise<T>((resolve, reject) => {
       group.members.push({ resolve: () => resolve(value), reject });
@@ -113,7 +127,7 @@ export class GroupedWriter {
     }
   }
 
-  private abortGroup(error: unknown, members: readonly Member[]): void {
+  private abortGroup(error: unknown): void {
     const group = this.group as Group;
     clearTimeout(group.timer);
     this.group = undefined;
@@ -122,7 +136,7 @@ export class GroupedWriter {
     } finally {
       this.restoreLevel(group);
     }
-    for (const m of members) m.reject(error);
+    for (const m of group.members) m.reject(error);
   }
 
   /** Commits the open group, if any. Safe to call from the timer, from `tx` and from `close`. */

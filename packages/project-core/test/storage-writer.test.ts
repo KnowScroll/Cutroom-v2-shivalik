@@ -257,3 +257,131 @@ test("writer: a non-positive commit tick is refused", async () => {
     t.cleanup();
   }
 });
+
+function settle(p: Promise<unknown>): () => string {
+  let s = "pending";
+  p.then(
+    () => {
+      s = "resolved";
+    },
+    (e: Error) => {
+      s = `rejected(${e.message})`;
+    },
+  );
+  return () => s;
+}
+const rowsOf = (s: Storage) =>
+  s
+    .prepare("SELECT n FROM p ORDER BY n")
+    .all()
+    .map((r) => r.n);
+const tick = () => new Promise((r) => setTimeout(r, 80));
+
+test("writer re-entrancy A: a first member that nests a tx then throws loses no member", async () => {
+  const { s, t } = await setup();
+  try {
+    let inner: Promise<unknown> = Promise.resolve();
+    const outer = s.tx((db) => {
+      db.exec("INSERT INTO p VALUES (1)");
+      inner = s.tx((d) => d.exec("INSERT INTO p VALUES (2)"));
+      throw new Error("outer failed");
+    });
+    const so = settle(outer);
+    const si = settle(inner);
+    await tick();
+    assert.equal(so(), "rejected(outer failed)");
+    assert.match(si(), /^rejected\(tx called from inside/);
+    assert.deepEqual(rowsOf(s), []);
+  } finally {
+    s.close();
+    t.cleanup();
+  }
+});
+
+test("writer re-entrancy B: a rolled-back later member does not resolve through a nested tx", async () => {
+  const { s, t } = await setup();
+  try {
+    const a = s.tx((db) => db.exec("INSERT INTO p VALUES (1)"));
+    let inner: Promise<unknown> = Promise.resolve();
+    const outer = s.tx((db) => {
+      db.exec("INSERT INTO p VALUES (2)");
+      inner = s.tx((d) => d.exec("INSERT INTO p VALUES (3)"));
+      throw new Error("outer failed");
+    });
+    const sa = settle(a);
+    const so = settle(outer);
+    const si = settle(inner);
+    await tick();
+    assert.equal(sa(), "resolved");
+    assert.equal(so(), "rejected(outer failed)");
+    assert.match(si(), /^rejected\(tx called from inside/);
+    assert.deepEqual(rowsOf(s), [1]);
+  } finally {
+    s.close();
+    t.cleanup();
+  }
+});
+
+test("writer re-entrancy C: a nested full tx does not commit a throwing member's partial row", async () => {
+  const { s, log, t } = await setup();
+  try {
+    let inner: Promise<unknown> = Promise.resolve();
+    const outer = s.tx((db) => {
+      db.exec("INSERT INTO p VALUES (1)");
+      inner = s.tx((d) => d.exec("INSERT INTO p VALUES (2)"), { durability: "full" });
+      db.exec("INSERT INTO p VALUES (3)");
+      throw new Error("outer failed after full inner");
+    });
+    const so = settle(outer);
+    const si = settle(inner);
+    await tick();
+    assert.equal(so(), "rejected(outer failed after full inner)");
+    assert.match(si(), /^rejected\(tx called from inside/);
+    assert.deepEqual(rowsOf(s), []);
+    assert.equal(commits(log), 0);
+  } finally {
+    s.close();
+    t.cleanup();
+  }
+});
+
+test("writer: a member that throws makes later tx calls work again (the running flag is reset)", async () => {
+  const { s, t } = await setup();
+  try {
+    await assert.rejects(
+      s.tx(() => {
+        throw new Error("x");
+      }),
+      /x/,
+    );
+    await s.tx((db) => db.exec("INSERT INTO p VALUES (1)"));
+    assert.deepEqual(rowsOf(s), [1]);
+  } finally {
+    s.close();
+    t.cleanup();
+  }
+});
+
+test("writer: a COMMIT failure (deferred foreign key) rejects every member, closes the transaction, and the writer recovers", async () => {
+  const { s, t } = await setup();
+  try {
+    s.exec(
+      "CREATE TABLE parent (id INTEGER PRIMARY KEY) STRICT; CREATE TABLE child (pid INTEGER REFERENCES parent(id) DEFERRABLE INITIALLY DEFERRED) STRICT",
+    );
+    const good = s.tx((db) => db.exec("INSERT INTO p VALUES (1)"));
+    const bad = s.tx((db) => db.exec("INSERT INTO child VALUES (99)"));
+    const sg = settle(good);
+    const sb = settle(bad);
+    await tick();
+    assert.match(sg(), /^rejected\(/);
+    assert.match(sb(), /^rejected\(/);
+    assert.deepEqual(rowsOf(s), []);
+    s.exec("BEGIN");
+    s.exec("ROLLBACK"); // would throw if a transaction were still open
+    await s.tx((db) => db.exec("INSERT INTO p VALUES (7)"));
+    assert.deepEqual(rowsOf(s), [7]);
+  } finally {
+    s.close();
+    t.cleanup();
+  }
+});

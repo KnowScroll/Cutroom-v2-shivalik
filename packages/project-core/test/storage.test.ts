@@ -5,9 +5,12 @@ import { test } from "node:test";
 import { SettingsRegistry } from "@cutroom/foundations";
 import {
   BUSY_TIMEOUT_MS,
+  type Driver,
+  isCorruption,
   isOldSqlite,
   MigrationRegistry,
   type MigrationScript,
+  nodeSqliteDriver,
   openDatabase,
   PROJECT_CORE_SETTINGS,
   resolveWriterSettings,
@@ -358,4 +361,37 @@ test("settings: the writer reads db.synchronous and db.commit_tick_ms from a reg
   );
   const got = resolveWriterSettings(reg);
   assert.deepEqual(got.ok && got.value, { synchronous: "NORMAL", commitTickMs: 20 });
+});
+
+test("storage: an error from quick_check that is not corruption is not DB_DAMAGED", async () => {
+  const t = tempSpace();
+  try {
+    const busy = Object.assign(new Error("database is locked"), { errcode: 5 });
+    const driver: Driver = {
+      open(path, options) {
+        const real = nodeSqliteDriver.open(path, options);
+        return {
+          exec: (sql) => real.exec(sql),
+          prepare: (sql) => {
+            if (sql === "PRAGMA quick_check") throw busy;
+            return real.prepare(sql);
+          },
+          get isTransaction() {
+            return real.isTransaction;
+          },
+          sqliteVersion: () => real.sqliteVersion(),
+          backupTo: (d) => real.backupTo(d),
+          close: () => real.close(),
+        };
+      },
+    };
+    await assert.rejects(openDatabase(t.db, { ...SETTINGS, driver }), (e: Error) => e === busy);
+    assert.equal(isCorruption(Object.assign(new Error("x"), { errcode: 11 })), true);
+    assert.equal(isCorruption(Object.assign(new Error("x"), { errcode: 267 })), true); // SQLITE_CORRUPT_VTAB
+    assert.equal(isCorruption(Object.assign(new Error("x"), { errcode: 26 })), true);
+    assert.equal(isCorruption(Object.assign(new Error("x"), { errcode: 5 })), false);
+    assert.equal(isCorruption(new Error("no code")), false);
+  } finally {
+    t.cleanup();
+  }
 });

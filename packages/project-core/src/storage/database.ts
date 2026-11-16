@@ -36,6 +36,17 @@ export function isOldSqlite(version: string): boolean {
   return false;
 }
 
+const SQLITE_CORRUPT = 11;
+const SQLITE_NOTADB = 26;
+
+/** The primary result code is the low byte of the (possibly extended) `errcode`. */
+export function isCorruption(error: unknown): boolean {
+  const code = (error as { errcode?: unknown } | null)?.errcode;
+  if (typeof code !== "number") return false;
+  const primary = code & 0xff;
+  return primary === SQLITE_CORRUPT || primary === SQLITE_NOTADB;
+}
+
 function newestBackup(spaceDir: string): string | null {
   const dir = join(spaceDir, "backups");
   if (!existsSync(dir)) return null;
@@ -132,7 +143,9 @@ export async function openDatabase(path: string, options: OpenOptions): Promise<
         .all()
         .map((r) => String(r.quick_check));
     } catch (error) {
-      // A file that is not a database fails on its first read instead of reporting rows.
+      // A file that is not a database fails on its first read instead of reporting rows. Only corruption is
+      // damage: a busy or I/O error must not invite a human to restore a backup (R3 §4, A:M0-10).
+      if (!isCorruption(error)) throw error;
       output = [error instanceof Error ? error.message : String(error)];
     }
     if (output.length !== 1 || output[0] !== "ok") {
