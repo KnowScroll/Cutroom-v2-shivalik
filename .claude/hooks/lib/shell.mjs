@@ -60,6 +60,20 @@ export function cmdName(tok) {
   return last.replace(/\.(exe|cmd|bat|ps1|com)$/, "");
 }
 
+// The regex source for the inside of a glob bracket class, or null when it is not a valid class
+// (empty, only `!`, or a bad range such as `z-a`): the caller then treats the `[` as a literal, never throws.
+function classRegex(inner) {
+  const body = inner.replace(/^!/, "");
+  if (body === "") return null;
+  const src = `[${inner.replace(/^!/, "^").replace(/\\/g, "\\\\")}]`;
+  try {
+    new RegExp(src);
+  } catch {
+    return null;
+  }
+  return src;
+}
+
 export function globToRegex(glob) {
   let re = "";
   for (let i = 0; i < glob.length; i++) {
@@ -68,9 +82,10 @@ export function globToRegex(glob) {
     else if (c === "?") re += ".";
     else if (c === "[") {
       const j = glob.indexOf("]", i + 1);
-      if (j < 0) re += "\\[";
+      const cls = j < 0 ? null : classRegex(glob.slice(i + 1, j));
+      if (cls === null) re += "\\[";
       else {
-        re += `[${glob.slice(i + 1, j).replace(/^!/, "^").replace(/\\/g, "\\\\")}]`;
+        re += cls;
         i = j;
       }
     } else re += c.replace(/[.+^${}()|\\]/g, "\\$&");

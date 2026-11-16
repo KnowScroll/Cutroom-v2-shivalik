@@ -343,3 +343,18 @@ test("the registration file (settings.json or its .off name) points at this hook
   assert.equal(entry.hooks[0].type, "command");
   assert.match(entry.hooks[0].command, /\.claude\/hooks\/guard\.mjs" \|\| exit 2$/);
 });
+
+test("#83 bracket tokens that are not valid glob classes never crash the guard", () => {
+  allowed("PowerShell", { command: "$r.Headers['Content-Length']" });
+  allowed("PowerShell", { command: "$r = Invoke-WebRequest -Uri https://example.com; $r.Headers['Content-Length']" });
+  shOk("echo [z-a]", "echo [!]", "echo []", "echo x[", "grep -E '[A-Z_]+' file", "echo a[Content-Length]");
+  allowed("Bash", { command: "cat docs/lld/*.md" });
+});
+
+test("#83 an invalid bracket class is a literal, and protected wildcards stay refused", async () => {
+  const { globToRegex } = await import(pathToFileURL(join(dirname(GUARD), "lib", "shell.mjs")).href);
+  assert.ok(globToRegex("a[z-a]").test("a[z-a]"));
+  assert.ok(globToRegex("[]").test("[]") && globToRegex("[!]").test("[!]"));
+  sh("archive-access", "cat docs/arch*/cutroom-v3*", "cat docs/*architecture*", "cat [z-a]docs/arch*/cutroom-v3*");
+  sh("env-access", "cat .e[n]v", "cat [.]env", "cat .e[z-a]nv .env");
+});
