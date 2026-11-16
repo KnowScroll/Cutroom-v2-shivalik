@@ -1,5 +1,4 @@
 // Design: lld/04 §2.5, §2.6 (revision store exports)
-export type { BlobRootProvider } from "./blob-root.js";
 export { REVISION_CODES, type RevisionCode } from "./codes.js";
 export {
   type EntityDocument,

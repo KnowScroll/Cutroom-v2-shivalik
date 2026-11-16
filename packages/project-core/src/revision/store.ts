@@ -1,9 +1,9 @@
 // Design: lld/04 §2.5, §2.6 (tables, "Atomic accepted-head update"), §2.7 (Branch, Promotion); b2b §2, §4
 import type { Diagnostic, Result } from "@cutroom/foundations";
 import { fail, isHashString, ok } from "@cutroom/foundations";
+import type { BlobRootProvider } from "../blob/roots.js";
 import type { RawDb } from "../storage/driver.js";
 import type { Storage } from "../storage/index.js";
-import type { BlobRootProvider } from "./blob-root.js";
 import { type EntityDocument, hashEntityVersion, hashManifest, isRevisionId } from "./hashing.js";
 
 export type RevisionOrigin = "patch" | "merge" | "restore" | "migration" | "genesis";

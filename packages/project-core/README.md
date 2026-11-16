@@ -14,6 +14,12 @@ Entity schemas, patches and validation, write authority, revisions, branches, me
 - `openDatabase` does not check the mount; start-up (M0-10) calls `checkSpaceMount` first.
 - `DB_DAMAGED` is returned only for corruption (SQLite result codes 11 and 26, extended codes included); any other error from `quick_check`, such as busy, is thrown.
 
+## Blob store notes
+
+- Explicit pins (`store.pins`) last for the life of the process only (build revision B4); a pin is lost on restart. Anything that must outlive a restart needs a persistent root from a provider, or the grace period (H7).
+- A caller must hold a root (a pin or a provider's root) for as long as it uses the path `open` returns: the sweep unlinks any unrooted blob older than `blob.grace_hours`, and nothing else keeps a file open for the caller.
+- Ingesting bytes whose hash is already stored replaces the stored file by rename, so a damaged blob is repaired by re-running the job that made it.
+
 ## Capabilities
 
 States: `planned`, `implemented`, `tested`, `render-verified`, `live-verified`.
@@ -21,7 +27,7 @@ States: `planned`, `implemented`, `tested`, `render-verified`, `live-verified`.
 | Capability                                                      | Work package   | State   |
 | --------------------------------------------------------------- | -------------- | ------- |
 | Storage adapter, grouped commits, migrations, Space mount check | M0-06          | tested  |
-| Blob store (`ingest`, `open`, `sweep`)                          | M0-07          | planned |
+| Blob store (`ingest`, `open`, `sweep`)                          | M0-07          | tested  |
 | Revision store and the accepted-head swap (`src/revision`)      | M0-08          | tested  |
 | Entity schemas, write levels, kind descriptions                 | M2-01          | planned |
 | Patch envelope, authority, invariants, branches, merge          | M2-03 to M2-06 | planned |

@@ -5,9 +5,9 @@ import {
   type EntityDocument,
   MigrationRegistry,
   openDatabase,
+  PROJECT_CORE_MIGRATIONS,
   type RawDb,
   REVISION_CODES,
-  REVISION_MIGRATIONS,
   type RevisionStore,
   type Storage,
   RevisionStore as Store,
@@ -16,11 +16,10 @@ import { SETTINGS, spyDriver, tempSpace } from "./storage-helpers.js";
 
 type Opts = { driver?: Parameters<typeof openDatabase>[1]["driver"] };
 
-// Number 1 belongs to M0-07's `blob` table; a placeholder keeps the shared sequence gap-free here.
+// The real Project Core migrations: 1 `blob` (M0-07), 2 `revision` (M0-08).
 function registry(): MigrationRegistry {
   const r = new MigrationRegistry();
-  r.registerMigrations("test", [{ number: 1, name: "placeholder", sql: "SELECT 1" }]);
-  r.registerMigrations("project-core", REVISION_MIGRATIONS);
+  r.registerMigrations("project-core", PROJECT_CORE_MIGRATIONS);
   return r;
 }
 
