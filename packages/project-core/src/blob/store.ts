@@ -4,7 +4,7 @@ import { dirname, join, resolve } from "node:path";
 import type { ArtifactRef, Result, SettingsLayer, SettingsRegistry } from "@cutroom/foundations";
 import { ArtifactRefSchema, fail, isHashString, ok } from "@cutroom/foundations";
 import type { Storage } from "../storage/index.js";
-import { type BlobFs, nodeBlobFs } from "./fs.js";
+import { type BlobFs, type BlobStat, nodeBlobFs } from "./fs.js";
 import type { BlobRootProvider } from "./roots.js";
 
 export type VerifyOnRead = "final_render_only" | "always";
@@ -167,23 +167,22 @@ export class BlobStore {
       const hash = `${HASH_PREFIX}${hasher.digest("hex")}`;
       const ref: ArtifactRef = { hash, media_type: mediaType, size };
       await fs.makeReadOnly(tmp);
-      await this.lock.run(async () => {
+      // The lock covers the rename and the transaction function, not the wait for the commit tick: a failed
+      // commit leaves a file without a row, which the design allows (R3 §4).
+      const { commit } = await this.lock.run(async () => {
         const finalPath = this.pathOf(hash);
         const shard = dirname(finalPath);
         const created = await fs.mkdirp(shard);
-        const existing = await fs.stat(finalPath);
-        if (existing !== undefined && existing.size === size) {
-          // Known bytes: the temporary file is discarded; the file already there stays.
-          await fs.unlink(tmp);
-          renamed = true;
-          if (options.durable) await fs.syncFile(finalPath);
-        } else {
-          await fs.rename(tmp, finalPath);
-          renamed = true;
-        }
-        if (options.durable) await this.syncDirs(shard, created);
-        await this.upsert(ref, options.durable);
+        // Always replace: the bytes just hashed are the right ones, and the file already there may be damaged
+        // (same size, other bytes) or short. Rename is atomic and replaces a read-only file on Linux.
+        await fs.rename(tmp, finalPath);
+        renamed = true;
+        // A directory this ingest created is made durable whoever made it, so a later durable ingest into it
+        // has a durable directory entry; a durable ingest also syncs the directory holding the renamed file.
+        if (options.durable || created !== undefined) await this.syncDirs(shard, created);
+        return { commit: this.upsert(ref, options.durable) };
       });
+      await commit;
       return ref;
     } catch (error) {
       // Before the rename nothing of this ingest may remain; after it the file stays for the sweep (R3 §4).
@@ -205,13 +204,13 @@ export class BlobStore {
     }
     const found = await this.fs.stat(path);
     if (found === undefined || found.size !== row.size) {
-      await this.evictIfDerived(row);
+      await this.evictIfStillBad(row, found);
       return this.missing(ref, found === undefined ? "file_missing" : "size_mismatch", row);
     }
     if (options.purpose === "final_render" || this.options.verifyOnRead === "always") {
       const actual = await this.hashFile(path);
       if (actual !== ref.hash) {
-        await this.evictIfDerived(row);
+        await this.evictIfStillBad(row, found);
         return this.missing(ref, "hash_mismatch", row);
       }
     }
@@ -259,17 +258,18 @@ export class BlobStore {
     const rows = this.options.storage.prepare("SELECT * FROM blob").all() as unknown as BlobRow[];
     const rowHashes = new Set(rows.map((r) => r.hash));
 
+    // Plan first, then three batched steps in R3 §2.14's order: mark `deleting`, unlink, delete the rows.
+    const mark: string[] = [];
+    const rescue: string[] = [];
+    const finishing: string[] = [];
     for (const row of rows) {
-      const path = this.pathOf(row.hash);
       if (row.state === "deleting") {
-        if (reached.has(row.hash) && (await this.fs.stat(path)) !== undefined) {
-          // Rooted again while marked: the file is still there, so keep it.
-          await this.setState(row.hash, "present", null);
-          continue;
+        if (reached.has(row.hash) && (await this.fs.stat(this.pathOf(row.hash))) !== undefined) {
+          rescue.push(row.hash); // rooted again while marked, file still there: keep it
+        } else {
+          finishing.push(row.hash);
+          finished.push(row.hash);
         }
-        await this.finishDelete(row.hash, path);
-        removed.push(row.hash);
-        finished.push(row.hash);
         continue;
       }
       if (reached.has(row.hash)) continue;
@@ -277,10 +277,24 @@ export class BlobStore {
         protectedByGrace++;
         continue;
       }
-      await this.setState(row.hash, "deleting", "unrooted");
-      await this.finishDelete(row.hash, path);
-      removed.push(row.hash);
+      mark.push(row.hash);
     }
+    if (mark.length > 0 || rescue.length > 0) {
+      await this.options.storage.tx((db) => {
+        const setState = db.prepare("UPDATE blob SET state = ?, purged_reason = ? WHERE hash = ?");
+        for (const h of mark) setState.run("deleting", "unrooted", h);
+        for (const h of rescue) setState.run("present", null, h);
+      });
+    }
+    const doomed = [...mark, ...finishing];
+    for (const h of doomed) await this.fs.unlink(this.pathOf(h));
+    if (doomed.length > 0) {
+      await this.options.storage.tx((db) => {
+        const del = db.prepare("DELETE FROM blob WHERE hash = ? AND state = 'deleting'");
+        for (const h of doomed) del.run(h);
+      });
+    }
+    removed.push(...doomed);
 
     const rowlessRemoved: string[] = [];
     for (const shard of await this.fs.readdir(this.blobsDir)) {
@@ -313,28 +327,16 @@ export class BlobStore {
     return { removed, finished, protectedByGrace, rowlessRemoved, tmpRemoved, roots: rootCounts };
   }
 
-  private async finishDelete(hash: string, path: string): Promise<void> {
-    await this.fs.unlink(path);
-    await this.options.storage.tx((db) => {
-      db.prepare("DELETE FROM blob WHERE hash = ? AND state = 'deleting'").run(hash);
-    });
-  }
-
-  private async setState(hash: string, state: "present" | "deleting", reason: string | null): Promise<void> {
-    await this.options.storage.tx((db) => {
-      db.prepare("UPDATE blob SET state = ?, purged_reason = ? WHERE hash = ?").run(state, reason, hash);
-    });
-  }
-
   private row(hash: string): BlobRow | undefined {
     return this.options.storage.prepare("SELECT * FROM blob WHERE hash = ?").get(hash) as unknown as
       | BlobRow
       | undefined;
   }
 
-  private async upsert(ref: ArtifactRef, durable: boolean): Promise<void> {
+  /** Calls `tx` at once (the function runs before this returns) and returns the commit's promise. */
+  private upsert(ref: ArtifactRef, durable: boolean): Promise<void> {
     const storedAt = this.now().toISOString();
-    await this.options.storage.tx((db) => {
+    return this.options.storage.tx((db) => {
       // A known hash keeps its row and renews `stored_at`, so grace restarts for bytes about to be referenced;
       // a row marked `deleting` is revived. `durable` only ever goes up.
       db.prepare(
@@ -362,10 +364,32 @@ export class BlobStore {
     for (const d of dirs) await this.fs.syncDir(d);
   }
 
-  private async evictIfDerived(row: BlobRow): Promise<void> {
-    if (row.durable === 1) return;
-    await this.options.storage.tx((db) => {
-      db.prepare("DELETE FROM blob WHERE hash = ? AND durable = 0").run(row.hash);
+  /**
+   * Removes the row of a damaged non-durable blob (treated as evicted). `open` looked outside the lock, so an
+   * ingest may have repaired the blob meanwhile: under the lock the row and the file are read again, and the
+   * row goes only if both are as `open` saw them (same row, same size and modification time) or the file is
+   * still missing or short.
+   */
+  private async evictIfStillBad(seen: BlobRow, seenStat: BlobStat | undefined): Promise<void> {
+    if (seen.durable === 1) return;
+    await this.lock.run(async () => {
+      const row = this.row(seen.hash);
+      if (row === undefined || row.durable === 1 || row.state !== "present") return;
+      if (row.stored_at !== seen.stored_at || row.size !== seen.size) return;
+      const now = await this.fs.stat(this.pathOf(seen.hash));
+      const stillMissingOrShort = now === undefined || now.size !== row.size;
+      const unchanged =
+        seenStat !== undefined &&
+        now !== undefined &&
+        now.size === seenStat.size &&
+        now.mtimeMs === seenStat.mtimeMs;
+      if (!stillMissingOrShort && !unchanged) return;
+      await this.options.storage.tx((db) => {
+        db.prepare("DELETE FROM blob WHERE hash = ? AND durable = 0 AND stored_at = ?").run(
+          row.hash,
+          row.stored_at,
+        );
+      });
     });
   }
 

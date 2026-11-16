@@ -36,3 +36,27 @@ test("blob (linux): re-ingesting good bytes over a truncated read-only file repl
     cleanup();
   }
 });
+
+for (const durable of [false, true]) {
+  test(`blob (linux): re-ingesting the right bytes repairs a same-size damaged ${durable ? "durable" : "non-durable"} blob`, async () => {
+    const { store, cleanup } = await setupBlobs({}, { "blob.verify_on_read": "always" });
+    try {
+      const data = bytes(5000);
+      const ref = await store.ingest(chunks(data), { durable, media_type: "a/b" });
+      const path = store.pathOf(ref.hash);
+      chmodSync(path, 0o644);
+      const b = readFileSync(path);
+      b[10] = (b[10] as number) ^ 1; // one byte, same size
+      writeFileSync(path, b);
+      chmodSync(path, 0o444);
+      const damaged = await store.open(ref, { purpose: "final_render" });
+      assert.equal(damaged.ok, false);
+      await store.ingest(chunks(data), { durable, media_type: "a/b" });
+      assert.deepEqual(readFileSync(path), Buffer.from(data));
+      assert.equal(statSync(path).mode & 0o777, 0o444);
+      assert.equal((await store.open(ref, { purpose: "final_render" })).ok, true);
+    } finally {
+      cleanup();
+    }
+  });
+}

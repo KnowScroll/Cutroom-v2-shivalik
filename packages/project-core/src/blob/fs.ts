@@ -101,7 +101,17 @@ export const nodeBlobFs: BlobFs = {
     }
   },
 
-  rename: (from, to) => rename(from, to),
+  async rename(from, to) {
+    try {
+      await rename(from, to);
+    } catch (error) {
+      // Windows will not replace a read-only file; Linux (the product) does.
+      const code = (error as { code?: unknown } | null)?.code;
+      if (process.platform !== "win32" || (code !== "EPERM" && code !== "EACCES")) throw error;
+      await chmod(to, 0o666);
+      await rename(from, to);
+    }
+  },
   makeReadOnly: (path) => chmod(path, READ_ONLY_MODE),
 
   async unlink(path) {

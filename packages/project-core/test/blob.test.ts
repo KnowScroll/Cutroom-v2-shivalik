@@ -7,6 +7,7 @@ import {
   BLOB_CODES,
   BLOB_MIGRATIONS,
   type BlobRootProvider,
+  BlobStore,
   nodeBlobFs,
   PROJECT_CORE_MIGRATIONS,
 } from "../src/index.js";
@@ -85,7 +86,8 @@ test("blob: a durable ingest syncs the file before the rename and the directory 
   const spy = spyFs();
   const { t, store, cleanup } = await setupBlobs({ fs: spy.fs });
   try {
-    const d = await store.ingest(chunks(bytes(3000)), { durable: true, media_type: "a/b" });
+    const data = bytes(3000);
+    const d = await store.ingest(chunks(data), { durable: true, media_type: "a/b" });
     const ops = spy.calls.map((c) => c.op);
     assert.ok(ops.includes("syncWriter"));
     assert.ok(ops.indexOf("syncWriter") < ops.indexOf("rename"), "file synced before rename");
@@ -99,8 +101,9 @@ test("blob: a durable ingest syncs the file before the rename and the directory 
     assert.ok(dirSyncs.includes(t.dir), "the parent of the first created directory is synced");
     assert.ok(ops.lastIndexOf("syncDir") > ops.indexOf("rename"), "directory synced after rename");
 
+    // The same bytes again, non-durable: the shard exists, so nothing at all is synced.
     spy.calls.length = 0;
-    await store.ingest(chunks(bytes(3000)), { durable: false, media_type: "a/b" });
+    await store.ingest(chunks(data), { durable: false, media_type: "a/b" });
     const syncs = spy.calls.filter((c) => ["syncWriter", "syncFile", "syncDir"].includes(c.op));
     assert.deepEqual(syncs, []);
   } finally {
@@ -108,7 +111,30 @@ test("blob: a durable ingest syncs the file before the rename and the directory 
   }
 });
 
-test("blob: a durable re-ingest of known bytes syncs the existing file and upgrades the row", async () => {
+test("blob: a non-durable ingest syncs no file, but syncs every directory it created, once", async () => {
+  const spy = spyFs();
+  const { t, store, cleanup } = await setupBlobs({ fs: spy.fs });
+  try {
+    const ref = await store.ingest(chunks(bytes(500)), { durable: false, media_type: "a/b" });
+    assert.deepEqual(
+      spy.calls.filter((c) => c.op === "syncWriter" || c.op === "syncFile"),
+      [],
+    );
+    const dirs = spy.calls.filter((c) => c.op === "syncDir").map((c) => c.path);
+    for (const d of [
+      join(t.dir, "blobs", "sha256", ref.hash.slice(7, 9)),
+      join(t.dir, "blobs", "sha256"),
+      join(t.dir, "blobs"),
+      t.dir,
+    ]) {
+      assert.ok(dirs.includes(d), `synced ${d}`);
+    }
+  } finally {
+    cleanup();
+  }
+});
+
+test("blob: a durable re-ingest of known bytes syncs the new file and the directory and upgrades the row", async () => {
   const spy = spyFs();
   const { store, storage, cleanup } = await setupBlobs({ fs: spy.fs });
   try {
@@ -116,8 +142,9 @@ test("blob: a durable re-ingest of known bytes syncs the existing file and upgra
     const ref = await store.ingest(chunks(data), { durable: false, media_type: "a/b" });
     spy.calls.length = 0;
     await store.ingest(chunks(data), { durable: true, media_type: "a/b" });
-    assert.ok(spy.calls.some((c) => c.op === "syncFile" && c.path === store.pathOf(ref.hash)));
-    assert.ok(spy.calls.some((c) => c.op === "syncDir"));
+    const ops = spy.calls.map((c) => c.op);
+    assert.ok(ops.indexOf("syncWriter") < ops.indexOf("rename"));
+    assert.ok(ops.indexOf("rename") < ops.indexOf("syncDir"));
     assert.equal(rowOf(storage, ref.hash)?.durable, 1);
   } finally {
     cleanup();
@@ -261,7 +288,20 @@ test("blob: verify_on_read = always catches one changed byte; final_render_only 
 test("blob: the sweep keeps a rooted old blob and removes an unrooted old one, in order deleting, unlink, delete row", async () => {
   const clock = new Date("2026-03-01T00:00:00Z");
   const spy = spyFs();
-  const { store, storage, cleanup } = await setupBlobs({ now: () => clock, fs: spy.fs });
+  const atUnlink: { path: string; state: string | undefined }[] = [];
+  let db: { prepare(sql: string): { get(...p: string[]): unknown } } | undefined;
+  const fs = {
+    ...spy.fs,
+    async unlink(path: string) {
+      if (path.includes("blobs") && db !== undefined) {
+        const h = `sha256:${path.slice(-64)}`;
+        atUnlink.push({ path, state: rowOf(db, h)?.state });
+      }
+      return await spy.fs.unlink(path);
+    },
+  };
+  const { store, storage, cleanup } = await setupBlobs({ now: () => clock, fs });
+  db = storage;
   try {
     const keep = await store.ingest(chunks(bytes(100)), { durable: false, media_type: "a/b" });
     const drop = await store.ingest(chunks(bytes(100)), { durable: false, media_type: "a/b" });
@@ -282,9 +322,9 @@ test("blob: the sweep keeps a rooted old blob and removes an unrooted old one, i
     assert.equal(existsSync(store.pathOf(drop.hash)), false);
     assert.ok(existsSync(store.pathOf(keep.hash)));
     assert.deepEqual(
-      spy.calls.filter((c) => c.op === "unlink").map((c) => c.path),
-      [store.pathOf(drop.hash)],
-      "only the unrooted blob is unlinked",
+      atUnlink,
+      [{ path: store.pathOf(drop.hash), state: "deleting" }],
+      "only the unrooted blob is unlinked, and its row was already marked deleting and not yet deleted",
     );
   } finally {
     cleanup();
@@ -451,6 +491,77 @@ test("blob: a root provider may be asynchronous", async () => {
     store.registerRootProvider({ name: "async", blobRoots: async () => new Set([ref.hash]) });
     const r = await store.sweep({ now: new Date(clock.getTime() + 48 * HOUR) });
     assert.deepEqual(r.removed, []);
+  } finally {
+    cleanup();
+  }
+});
+
+test("blob: a sweep of 200 unrooted blobs uses a bounded number of transactions", async () => {
+  const clock = new Date("2026-03-01T00:00:00Z");
+  let count = 0;
+  const probe = await setupBlobs({ now: () => clock });
+  const counting = new Proxy(probe.storage, {
+    get(target, prop) {
+      if (prop === "tx") {
+        return (...args: Parameters<typeof target.tx>) => {
+          count++;
+          return target.tx(...args);
+        };
+      }
+      const v = Reflect.get(target, prop) as unknown;
+      return typeof v === "function" ? v.bind(target) : v;
+    },
+  });
+  const store = new BlobStore({
+    spaceDir: probe.t.dir,
+    storage: counting,
+    verifyOnRead: "final_render_only",
+    graceHours: 24,
+    now: () => clock,
+  });
+  try {
+    const hashes: string[] = [];
+    for (let i = 0; i < 200; i++) {
+      hashes.push((await store.ingest(chunks(bytes(32)), { durable: false, media_type: "a/b" })).hash);
+    }
+    count = 0;
+    const report = await store.sweep({ now: new Date(clock.getTime() + 25 * HOUR) });
+    assert.equal(report.removed.length, 200);
+    assert.equal(count, 2, "one transaction marks, one deletes the rows");
+    assert.equal(rowCount(probe.storage), 0);
+    for (const h of hashes.slice(0, 5)) assert.equal(existsSync(store.pathOf(h)), false);
+  } finally {
+    probe.cleanup();
+  }
+});
+
+test("blob: open racing an ingest that repairs the blob does not delete the row the ingest wrote", async () => {
+  let hook: (() => Promise<void>) | undefined;
+  const fs = {
+    ...nodeBlobFs,
+    async stat(path: string) {
+      const found = await nodeBlobFs.stat(path);
+      const h = hook;
+      hook = undefined;
+      if (h !== undefined) await h();
+      return found;
+    },
+  };
+  const { store, storage, cleanup } = await setupBlobs({ fs });
+  try {
+    const data = bytes(4000);
+    const ref = await store.ingest(chunks(data), { durable: false, media_type: "a/b" });
+    const path = store.pathOf(ref.hash);
+    chmodSync(path, 0o644);
+    writeFileSync(path, bytes(10)); // short, as after a power loss
+    // open stats the short file, then (before it can evict) the job re-runs and re-ingests the right bytes.
+    hook = async () => {
+      await store.ingest(chunks(data), { durable: false, media_type: "a/b" });
+    };
+    const r = await store.open(ref, { purpose: "other" });
+    assert.equal(r.ok, false, "that open did see a short file");
+    assert.ok(rowOf(storage, ref.hash), "the row the ingest wrote survives");
+    assert.equal((await store.open(ref, { purpose: "final_render" })).ok, true, "and the blob opens");
   } finally {
     cleanup();
   }
