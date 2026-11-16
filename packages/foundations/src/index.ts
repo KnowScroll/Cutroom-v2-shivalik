@@ -2,3 +2,4 @@
 export { CODES } from "./codes.js";
 export * from "./hash/index.js";
 export * from "./settings/index.js";
+export { FOUNDATIONS_SETTINGS } from "./settings.js";
