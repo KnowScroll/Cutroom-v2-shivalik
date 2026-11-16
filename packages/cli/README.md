@@ -13,6 +13,6 @@ States: `planned`, `implemented`, `tested`, `render-verified`, `live-verified`.
 
 | Capability                       | Work package | State   |
 | -------------------------------- | ------------ | ------- |
-| CLI skeleton and Space lifecycle | M0-10        | planned |
+| CLI skeleton and Space lifecycle | M0-10        | tested  |
 | Director loop wiring             | M4-07        | planned |
 | Settings catalogue (`src/settings.ts`, empty: the CLI owns no setting) | M0-05 | tested |

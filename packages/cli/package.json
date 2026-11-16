@@ -10,6 +10,9 @@
       "default": "./dist/src/index.js"
     }
   },
+  "bin": {
+    "cutroom": "./dist/src/bin.js"
+  },
   "scripts": {
     "test": "node ../../tools/run-tests.mjs unit --package cli"
   },
