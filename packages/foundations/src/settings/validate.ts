@@ -1,5 +1,6 @@
 // Design: lld/04 §2.7 (ranges), lld/11 A:M0-3 (keyed values, integer-or-listed ranges), G15 (range required)
-import type { ScalarRange, ScalarType, SettingRange, SettingsDiagnostic, SettingType } from "./types.js";
+import type { Diagnostic } from "../vocab/diagnostic.js";
+import type { ScalarRange, ScalarType, SettingRange, SettingType } from "./types.js";
 
 export const SCALAR_TYPES: readonly ScalarType[] = [
   "number",
@@ -79,7 +80,7 @@ export function validateScalar(
   range: ScalarRange,
   value: unknown,
   path: string,
-): SettingsDiagnostic[] {
+): Diagnostic[] {
   if (acceptsScalar(type, range, value)) return [];
   return [{ code: "VALUE_OUT_OF_RANGE", path, expected: describeRange(range), got: value }];
 }
@@ -91,7 +92,7 @@ export function validateValue(
   value: unknown,
   path: string,
   options: { requireAllKeys?: boolean } = {},
-): SettingsDiagnostic[] {
+): Diagnostic[] {
   if (type !== "keyed") {
     if (range.kind === "keyed") return [{ code: "VALUE_OUT_OF_RANGE", path, got: value }];
     return validateScalar(type, range, value, path);
@@ -103,7 +104,7 @@ export function validateValue(
       { code: "VALUE_OUT_OF_RANGE", path, expected: `an object with keys ${keys.join(", ")}`, got: value },
     ];
   }
-  const out: SettingsDiagnostic[] = [];
+  const out: Diagnostic[] = [];
   for (const key of Object.keys(value).sort()) {
     const spec = range.keys[key];
     if (spec === undefined) {

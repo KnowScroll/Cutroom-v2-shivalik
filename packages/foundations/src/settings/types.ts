@@ -1,22 +1,8 @@
 // Design: lld/04 §2.7 and §5 (setting records, ranges), lld/11 A:M0-3 (keyed values, integer-or-listed ranges)
-import type { SettingsCode } from "./codes.js";
 
 /** Who may write an override: `human` or `director` (G15). A worker acts within the Director's level. */
 export type OverrideLevel = "human" | "director";
 export type WriterLevel = OverrideLevel;
-
-/** Local minimal shape of the design's Diagnostic; to be unified with M0-02's `Diagnostic`. */
-export type SettingsDiagnostic = {
-  readonly code: SettingsCode;
-  readonly path: string;
-  readonly expected?: string;
-  readonly got?: unknown;
-  readonly candidates?: readonly string[];
-};
-
-export type SettingsResult<T> =
-  | { readonly ok: true; readonly value: T }
-  | { readonly ok: false; readonly diagnostics: readonly SettingsDiagnostic[] };
 
 /** The type of one value. `integer_or_string` is the A:M0-3 form (`audit.retention_days`: days or `keep_all`). */
 export type ScalarType = "number" | "integer" | "string" | "boolean" | "string_list" | "integer_or_string";
