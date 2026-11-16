@@ -1,8 +1,8 @@
 // Design: lld/06 §2.4 (Predicate and Need), lld/11 B:SD1 (declared in foundations, meaning kept by R5)
 import { z } from "zod";
-import { ArtifactPointerSchema, Sha256TextSchema } from "../vocab/vocab.js";
+import { type ArtifactRef, ArtifactRefSchema, HashStringSchema } from "../hash/refs.js";
 
-const HashSchema = Sha256TextSchema;
+const HashSchema = HashStringSchema;
 const EntityIdSchema = z.string().regex(/^ent_[0-9a-f-]{36}$/);
 const RevIdSchema = z.string().regex(/^rev_[0-9a-f]{64}$/);
 
@@ -23,7 +23,7 @@ export type Predicate =
       authority: "quality";
       check: string;
       verdict: "PASS";
-      subject: { result_of: string } | { artifact: z.infer<typeof ArtifactPointerSchema> };
+      subject: { result_of: string } | { artifact: ArtifactRef };
     }
   | {
       fact: "acceptance";
@@ -57,7 +57,7 @@ export const PredicateSchema: z.ZodType<Predicate> = z.lazy(() =>
       verdict: z.literal("PASS"),
       subject: z.union([
         z.strictObject({ result_of: HashSchema }),
-        z.strictObject({ artifact: ArtifactPointerSchema }),
+        z.strictObject({ artifact: ArtifactRefSchema }),
       ]),
     }),
     z.strictObject({

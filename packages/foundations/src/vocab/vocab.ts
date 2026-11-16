@@ -1,5 +1,6 @@
 // Design: lld/02 §4.1, §4.3, §5 (shared enumerations, location, coverage and content lists)
 import { z } from "zod";
+import { ArtifactRefSchema } from "../hash/refs.js";
 
 export const COMMITMENT_STATES = ["exploring", "provisional", "frozen", "superseded", "withdrawn"] as const;
 export const CommitmentStateSchema = z.enum(COMMITMENT_STATES);
@@ -59,14 +60,6 @@ export const RegionSchema = z.strictObject({
 });
 export type Region = z.infer<typeof RegionSchema>;
 
-// sha256 pointer to bytes with media type and size (R1 §3); M0-03 owns the full ArtifactRef helpers.
-export const Sha256TextSchema = z.string().regex(/^sha256:[0-9a-f]{64}$/);
-export const ArtifactPointerSchema = z.strictObject({
-  hash: Sha256TextSchema,
-  media_type: z.string().min(1),
-  size: z.number().int().safe().nonnegative(),
-});
-
 export const SourceLocationSchema = z.union([
   z.strictObject({ file: z.string().min(1), line: z.number().int().positive() }),
   z.strictObject({ tree_path: z.string().min(1) }),
@@ -78,7 +71,7 @@ export const LocationSchema = z.strictObject({
   revision: z.string().optional(),
   interval: IntervalSchema.optional(),
   region: RegionSchema.optional(),
-  artifact: ArtifactPointerSchema.optional(),
+  artifact: ArtifactRefSchema.optional(),
   source: SourceLocationSchema.optional(),
 });
 export type Location = z.infer<typeof LocationSchema>;

@@ -8,7 +8,9 @@ export const DiagnosticSchema = z.strictObject({
   got: z.unknown().optional(),
   candidates: z.array(z.string()).optional(),
 });
-export type Diagnostic = z.infer<typeof DiagnosticSchema>;
+export type Diagnostic = Omit<z.infer<typeof DiagnosticSchema>, "candidates"> & {
+  readonly candidates?: readonly string[];
+};
 
 /** A failure the design names is a value, not an exception (conventions §5). */
 export type Result<T> =
